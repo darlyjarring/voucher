@@ -34,7 +34,6 @@
       background: #ffffff;
       border: 1.5px solid #002B5B;
       box-shadow: 0 10px 25px -5px rgba(0, 43, 91, 0.12);
-      transform-origin: top left;
     }
 
     .voucher-table {
@@ -42,6 +41,15 @@
       border-collapse: collapse;
       font-size: 10.5px;
       table-layout: fixed;
+    }
+
+    .voucher-table thead {
+      display: table-header-group;
+    }
+
+    .voucher-table tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .voucher-table th {
@@ -66,6 +74,27 @@
       overflow-wrap: anywhere;
       position: relative;
       user-select: none;
+    }
+
+    /* Densidades de impresión vertical */
+    .voucher-sheet[data-print-density="compact"] .voucher-table {
+      font-size: 9.5px;
+    }
+    .voucher-sheet[data-print-density="compact"] .voucher-table th,
+    .voucher-sheet[data-print-density="compact"] .voucher-table td {
+      padding: 3px 2px;
+      height: 22px;
+      min-height: 22px;
+    }
+
+    .voucher-sheet[data-print-density="expanded"] .voucher-table {
+      font-size: 11px;
+    }
+    .voucher-sheet[data-print-density="expanded"] .voucher-table th,
+    .voucher-sheet[data-print-density="expanded"] .voucher-table td {
+      padding: 6px 4px;
+      height: 30px;
+      min-height: 30px;
     }
 
     .voucher-table td.cell-dotted {
@@ -105,20 +134,22 @@
       box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25);
     }
 
-    /* Impresión VERTICAL (Portrait) ajustada al ancho de la hoja */
+    /* Impresión VERTICAL (Portrait) ajustada al ancho de la hoja y llenando el alto vertical */
     @media print {
       @page {
         size: portrait;
-        margin: 8mm;
+        margin: 6mm;
       }
 
       html, body {
         width: 100% !important;
         height: auto !important;
+        min-height: 0 !important;
         background: #ffffff !important;
         margin: 0 !important;
         padding: 0 !important;
         overflow: visible !important;
+        display: block !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
@@ -130,27 +161,43 @@
       .print-container {
         padding: 0 !important;
         margin: 0 !important;
-        max-width: 100% !important;
+        max-width: none !important;
         width: 100% !important;
+        display: block !important;
       }
 
       #sheetsWrapper {
         display: block !important;
         width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
 
       .voucher-sheet {
         box-shadow: none !important;
-        border: 1.2px solid #002B5B !important;
+        border: 1px solid #002B5B !important;
         margin: 0 !important;
-        page-break-after: always;
-        break-after: page;
-        transform-origin: top left !important;
+        padding: 4mm !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        transform: none !important;
+        display: block !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+        break-after: page !important;
+        page-break-after: always !important;
       }
 
       .voucher-sheet.print-last {
-        page-break-after: auto !important;
         break-after: auto !important;
+        page-break-after: auto !important;
+      }
+
+      .voucher-sheet .overflow-x-auto {
+        overflow: visible !important;
+        width: 100% !important;
       }
 
       .excel-cell.excel-selected,
@@ -161,14 +208,52 @@
       }
 
       .voucher-table {
-        font-size: 8.5px !important;
         width: 100% !important;
+        table-layout: fixed !important;
+        font-size: 8.5px !important;
+        line-height: 1.2 !important;
+      }
+
+      .voucher-table thead {
+        display: table-header-group !important;
+      }
+
+      .voucher-table tr {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
 
       .voucher-table th,
       .voucher-table td {
-        padding: 2.5px 2px !important;
-        height: 19px !important;
+        padding: 3px 2px !important;
+        height: 21px !important;
+        min-height: 21px !important;
+      }
+
+      /* Densidad Compacta en impresión: más filas por hoja vertical */
+      .voucher-sheet[data-print-density="compact"] .voucher-table {
+        font-size: 7.8px !important;
+        line-height: 1.15 !important;
+      }
+
+      .voucher-sheet[data-print-density="compact"] .voucher-table th,
+      .voucher-sheet[data-print-density="compact"] .voucher-table td {
+        padding: 2px 1.5px !important;
+        height: 17px !important;
+        min-height: 17px !important;
+      }
+
+      /* Densidad Expandida en impresión: celdas más amplias */
+      .voucher-sheet[data-print-density="expanded"] .voucher-table {
+        font-size: 9.2px !important;
+        line-height: 1.25 !important;
+      }
+
+      .voucher-sheet[data-print-density="expanded"] .voucher-table th,
+      .voucher-sheet[data-print-density="expanded"] .voucher-table td {
+        padding: 4.5px 2.5px !important;
+        height: 26px !important;
+        min-height: 26px !important;
       }
     }
   </style>
@@ -332,6 +417,15 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2" id="sheetActions" style="display: none;">
+        <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5">
+          <label for="selectPrintDensity" class="text-xs font-semibold text-slate-600 whitespace-nowrap">Densidad Impresión:</label>
+          <select id="selectPrintDensity" class="text-xs font-bold text-[#002B5B] bg-transparent focus:outline-none cursor-pointer">
+            <option value="compact">Compacto (Más filas por hoja)</option>
+            <option value="normal" selected>Normal</option>
+            <option value="expanded">Expandido (Filas más altas)</option>
+          </select>
+        </div>
+
         <button id="btnAddRow" type="button" class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition flex items-center gap-1.5">
           + Agregar Fila
         </button>
@@ -601,6 +695,7 @@
       sheets: {}, // { [lineOp]: { lineOp, vessel, voyage, rows: [...] } }
       activeLine: null,
       printMode: 'SINGLE', // 'SINGLE' | 'ALL'
+      printDensity: 'normal', // 'compact' | 'normal' | 'expanded'
       cachedGeneralMatrix: null, // Guarda la matriz del archivo general para ejecutar Paso 3 directo
       selectedCell: { line: null, r: 0, c: 1 } // Celda activa tipo Excel (por defecto Unit en fila 0)
     };
@@ -1361,6 +1456,7 @@
         const sheetDiv = document.createElement('div');
         sheetDiv.className = `voucher-sheet rounded-sm p-4 sm:p-6 ${isActive ? 'block' : 'hidden'} ${appState.printMode === 'ALL' ? 'print:block' : ''} ${isLast ? 'print-last' : ''}`;
         sheetDiv.dataset.line = key;
+        sheetDiv.dataset.printDensity = appState.printDensity;
 
         const totalRows = getRowCountForLine(key);
         const displayRows = [];
@@ -1734,33 +1830,20 @@
      * =========================================================================
      */
     function adjustPortraitPrintScale() {
-      const sheets = document.querySelectorAll('.voucher-sheet');
-      // Ancho útil aproximado en hoja vertical A4/Carta con márgenes de 8mm (~740px)
-      const targetPrintWidthPx = 740;
-
-      sheets.forEach(sheet => {
+      // Se mantiene el flujo vertical natural sin escalar el alto con transform/zoom
+      // para que las filas llenen verticalmente la hoja hasta el margen inferior.
+      document.querySelectorAll('.voucher-sheet').forEach(sheet => {
         sheet.style.transform = '';
         sheet.style.width = '';
-        const naturalWidth = sheet.scrollWidth || sheet.offsetWidth;
-        if (naturalWidth > targetPrintWidthPx) {
-          const scale = Math.min(1, targetPrintWidthPx / naturalWidth);
-          sheet.style.setProperty('--print-scale', scale.toFixed(4));
-        } else {
-          sheet.style.setProperty('--print-scale', '1');
-        }
+        sheet.dataset.printDensity = appState.printDensity;
       });
     }
 
     window.addEventListener('beforeprint', () => {
       document.querySelectorAll('.voucher-sheet').forEach(sheet => {
-        const scale = parseFloat(sheet.style.getPropertyValue('--print-scale') || '1');
-        if (scale < 1) {
-          sheet.style.transform = `scale(${scale})`;
-          sheet.style.width = `${(100 / scale).toFixed(2)}%`;
-        } else {
-          sheet.style.transform = 'none';
-          sheet.style.width = '100%';
-        }
+        sheet.style.transform = 'none';
+        sheet.style.width = '100%';
+        sheet.dataset.printDensity = appState.printDensity;
       });
     });
 
@@ -1773,9 +1856,17 @@
 
     /**
      * =========================================================================
-     * BOTONES DE ACCIÓN: AGREGAR FILA, IMPRIMIR VERTICAL Y EXPORTAR EXCEL
+     * BOTONES DE ACCIÓN: DENSIDAD, AGREGAR FILA, IMPRIMIR VERTICAL Y EXPORTAR EXCEL
      * =========================================================================
      */
+    document.getElementById('selectPrintDensity').addEventListener('change', (e) => {
+      appState.printDensity = e.target.value;
+      document.querySelectorAll('.voucher-sheet').forEach(sheet => {
+        sheet.dataset.printDensity = appState.printDensity;
+      });
+      logDiag(`Densidad de impresión configurada en: ${appState.printDensity}.`, 'info');
+    });
+
     document.getElementById('btnAddRow').addEventListener('click', () => {
       const line = appState.activeLine;
       const sheet = appState.sheets[line];
