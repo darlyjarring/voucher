@@ -10,8 +10,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <!-- SheetJS con soporte de estilos para exportar .xlsx corporativo -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+  <!-- SheetJS Oficial + Fallback automático -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script>
+    if (typeof window.XLSX === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');
+    }
+  </script>
 
   <style>
     body {
@@ -20,14 +25,14 @@
       color: #0f172a;
     }
 
-    /* Estilos específicos del formato oficial DP World Posorja */
+    /* Colores corporativos DP World Posorja */
     .dpw-navy {
-      background-color: #002B5B;
+      background-color: #002855;
       color: #ffffff;
     }
 
     .dpw-navy-text {
-      color: #002B5B;
+      color: #002855;
     }
 
     .dpw-red-text {
@@ -36,8 +41,8 @@
 
     .voucher-sheet {
       background: #ffffff;
-      border: 1.5px solid #002B5B;
-      box-shadow: 0 10px 25px -5px rgba(0, 43, 91, 0.12);
+      border: 1.5px solid #002855;
+      box-shadow: 0 10px 25px -5px rgba(0, 40, 85, 0.12);
     }
 
     .voucher-table {
@@ -47,30 +52,26 @@
     }
 
     .voucher-table th {
-      background-color: #002B5B;
+      background-color: #002855;
       color: #ffffff;
       font-weight: 600;
       text-align: center;
       padding: 6px 4px;
-      border: 1px solid #001f42;
+      border: 1px solid #001a38;
       white-space: nowrap;
     }
 
     .voucher-table td {
-      padding: 5px 5px;
+      padding: 4px 5px;
       text-align: center;
       vertical-align: middle;
       color: #1e293b;
       min-height: 24px;
-      height: 25px;
+      height: 24px;
     }
 
-    /* Bordes punteados interiores (cols 1-9) y sólidos derecha (cols 10-13) igual a la plantilla oficial */
     .voucher-table td.cell-dotted {
-      border-top: 1px dotted #94a3b8;
-      border-bottom: 1px dotted #94a3b8;
-      border-left: 1px dotted #94a3b8;
-      border-right: 1px dotted #94a3b8;
+      border: 1px dotted #94a3b8;
     }
 
     .voucher-table td.cell-solid {
@@ -78,7 +79,7 @@
     }
 
     .voucher-table td.cell-num {
-      color: #002B5B;
+      color: #002855;
       font-weight: 600;
       border: 1px solid #64748b;
       background-color: #f8fafc;
@@ -89,7 +90,13 @@
       background-color: #eff6ff;
     }
 
-    /* Configuración exclusiva para Impresión en Hoja Horizontal */
+    .dropzone-active {
+      border-color: #002855 !important;
+      background-color: #dbeafe !important;
+      transform: scale(1.01);
+    }
+
+    /* Configuración exclusiva para Impresión Horizontal */
     @media print {
       @page {
         size: landscape;
@@ -117,7 +124,7 @@
 
       .voucher-sheet {
         box-shadow: none !important;
-        border: 1.5px solid #002B5B !important;
+        border: 1.5px solid #002855 !important;
         margin-bottom: 0 !important;
         page-break-after: always;
         break-after: page;
@@ -144,156 +151,180 @@
 <body class="min-h-screen flex flex-col">
 
   <!-- Barra Superior de Navegación (Oculta al imprimir) -->
-  <header class="no-print bg-[#002B5B] text-white shadow-md sticky top-0 z-30">
+  <header class="no-print bg-[#002855] text-white shadow-md sticky top-0 z-30">
     <div class="max-w-[1600px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <!-- Logo SVG DP World -->
         <div class="bg-white rounded-lg px-2.5 py-1.5 flex items-center gap-1.5 shadow-sm">
-          <span class="font-extrabold text-[#002B5B] text-sm tracking-tight">DP WORLD</span>
+          <span class="font-extrabold text-[#002855] text-sm tracking-tight">DP WORLD</span>
           <span class="text-[11px] font-bold text-[#E30613]">Posorja</span>
         </div>
         <div>
-          <h1 class="text-base sm:text-lg font-bold leading-tight">Generador Voucher de Embarque</h1>
-          <p class="text-xs text-blue-200">División automática por Línea Naviera (Line Op) • Listo para impresión y Excel</p>
+          <h1 class="text-base sm:text-lg font-bold leading-tight">Voucher Embarque — División por Línea Naviera</h1>
+          <p class="text-xs text-blue-200">1) Consolidado General → 2) Completar con Archivo de Línea → 3) Consolidación Final</p>
         </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-        <button id="btnDemo" type="button" class="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm">
+        <span id="xlsxLibStatus" class="text-[11px] px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 font-medium">
+          Motor Excel Listo
+        </span>
+
+        <button id="btnDemo" type="button" onclick="loadDemoData()" class="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          Probar Demo (COS)
+          Cargar Demo
         </button>
 
-        <button id="btnReset" type="button" class="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-medium text-xs sm:text-sm transition flex items-center gap-1.5">
+        <button id="btnReset" type="button" onclick="resetAllData()" class="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-medium text-xs sm:text-sm transition flex items-center gap-1.5 cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          Limpiar Todo
+          Reiniciar
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Panel de Flujo de Trabajo en 3 Pasos (Oculto al imprimir) -->
-  <section class="no-print max-w-[1600px] w-full mx-auto px-4 pt-5 pb-3">
-    <!-- Toast / Notificación de estado -->
-    <div id="statusBanner" class="hidden mb-4 p-3.5 rounded-xl border text-sm font-medium flex items-center justify-between gap-3 transition-all">
+  <!-- Panel de Control: Flujo en 3 Pasos + Log de Diagnóstico (Oculto al imprimir) -->
+  <section class="no-print max-w-[1600px] w-full mx-auto px-4 pt-4 pb-2 space-y-3">
+
+    <!-- Alerta / Banner de Estado Principal -->
+    <div id="statusBanner" class="hidden p-3.5 rounded-xl border text-sm font-medium flex items-center justify-between gap-3 transition-all">
       <div class="flex items-center gap-2.5">
-        <span id="statusIcon"></span>
+        <span id="statusIcon" class="text-base"></span>
         <span id="statusText"></span>
       </div>
-      <button type="button" onclick="hideStatus()" class="text-xs opacity-70 hover:opacity-100 px-2 py-1 rounded">Cerrar</button>
+      <button type="button" onclick="hideStatus()" class="text-xs opacity-75 hover:opacity-100 px-2 py-1 rounded bg-black/5 cursor-pointer">Cerrar</button>
     </div>
 
+    <!-- Tarjetas de los 3 Pasos -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
       <!-- PASO 1: Archivo General de Embarque (Detecta Líneas y Separa Hojas) -->
-      <div class="bg-white rounded-xl border-2 border-[#002B5B]/25 p-4 shadow-sm flex flex-col justify-between">
+      <div class="bg-white rounded-xl border-2 border-[#002855]/25 p-4 shadow-sm flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between mb-2">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#002B5B] text-white">
-              PASO 1 • Archivo General
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#002855] text-white">
+              PASO 1 • Consolidado General
             </span>
-            <span id="badgeStep1" class="text-xs font-semibold text-slate-400">Pendiente</span>
+            <span id="badgeStep1" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
+              Pendiente
+            </span>
           </div>
           <h2 class="font-bold text-slate-800 text-sm mb-1">1. Subir Archivo General de Embarque</h2>
           <p class="text-xs text-slate-500 mb-3">
-            Sube el consolidado de la nave (<code class="bg-slate-100 px-1 rounded">COOPER ... EXPO.xlsx</code>). El sistema <strong>detecta cuántas líneas (Line Op) hay</strong> y genera una hoja por cada línea.
+            Sube el listado consolidado (<code class="bg-slate-100 px-1 rounded">EXPO .xlsx / .xls</code>). Detecta automáticamente cuántas líneas (<code class="bg-slate-100 px-1 rounded">Line Op</code>) existen y crea un voucher por cada línea.
           </p>
         </div>
 
-        <div class="space-y-2">
-          <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#002B5B]/40 hover:border-[#002B5B] bg-blue-50/40 hover:bg-blue-50 rounded-xl cursor-pointer transition p-2 text-center">
-            <svg class="w-6 h-6 text-[#002B5B] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-            <span class="text-xs font-semibold text-[#002B5B]">Seleccionar Archivo General (.xlsx, .xls)</span>
-            <span class="text-[11px] text-slate-500">Identifica líneas y crea un voucher por cada una</span>
-            <input id="inputStep1" type="file" accept=".xls,.xlsx,.csv" class="hidden" />
+        <div>
+          <label id="dropStep1" class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#002855]/40 hover:border-[#002855] bg-blue-50/40 hover:bg-blue-50 rounded-xl cursor-pointer transition p-2 text-center">
+            <svg class="w-6 h-6 text-[#002855] mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            <span class="text-xs font-bold text-[#002855]">Haz clic o arrastra el Consolidado (.xlsx / .xls)</span>
+            <span class="text-[11px] text-slate-500">Separa automáticamente por cada Line Op</span>
+            <input id="inputStep1" type="file" accept=".xlsx,.xls,.csv" onchange="handleStep1GeneralUpload(event)" class="hidden" />
           </label>
         </div>
       </div>
 
-      <!-- PASO 2: Archivo(s) de Línea (Completar datos vacíos de cada línea) -->
+      <!-- PASO 2: Archivo(s) de Línea (Completa datos vacíos de cada línea) -->
       <div class="bg-white rounded-xl border-2 border-emerald-600/25 p-4 shadow-sm flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between mb-2">
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-700 text-white">
               PASO 2 • Archivo(s) de Línea
             </span>
-            <span id="badgeStep2" class="text-xs font-semibold text-slate-400">Pendiente</span>
+            <span id="badgeStep2" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
+              Pendiente
+            </span>
           </div>
-          <h2 class="font-bold text-slate-800 text-sm mb-1">2. Subir Archivo(s) por Línea Naviera</h2>
-          <p class="text-xs text-slate-500 mb-2">
-            Sube el reporte/voucher de una o varias líneas (<code class="bg-slate-100 px-1 rounded">Report.xls</code>). Completa <strong>lo que estaba vacío anteriormente</strong> (<em>Export</em>, <em>Vent.</em>, <em>Commodity</em>, <em>POL</em>, <em>Remarks</em>).
+          <h2 class="font-bold text-slate-800 text-sm mb-1">2. Subir Excel / Reporte por Línea</h2>
+          <p class="text-xs text-slate-500 mb-3">
+            Sube uno o varios archivos de línea (<code class="bg-slate-100 px-1 rounded">Report.xls / .xlsx</code>). Rellena los campos vacíos (<em>Vessel/Voyage</em>, <em>Export</em>, <em>Vent.</em>, <em>Commodity</em>, <em>POL</em>, <em>Remarks</em>) en la hoja correspondiente.
           </p>
         </div>
 
-        <div class="space-y-2">
-          <div class="flex items-center gap-2">
-            <label for="targetLineStep2" class="text-xs font-semibold text-slate-600 whitespace-nowrap">Aplicar a línea:</label>
-            <select id="targetLineStep2" class="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-slate-50 font-semibold text-slate-700 focus:outline-none focus:border-emerald-600">
-              <option value="AUTO">Detectar automáticamente</option>
-            </select>
-          </div>
-          <label class="flex flex-col items-center justify-center w-full h-16 border-2 border-dashed border-emerald-600/40 hover:border-emerald-600 bg-emerald-50/40 hover:bg-emerald-50 rounded-xl cursor-pointer transition p-2 text-center">
-            <span class="text-xs font-semibold text-emerald-800">Subir Archivo(s) de Línea (.xls, .xlsx)</span>
-            <span class="text-[11px] text-slate-500">Cruza por Unit y completa campos vacíos</span>
-            <input id="inputStep2" type="file" accept=".xls,.xlsx,.csv" multiple class="hidden" />
+        <div>
+          <label id="dropStep2" class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-600/40 hover:border-emerald-600 bg-emerald-50/40 hover:bg-emerald-50 rounded-xl cursor-pointer transition p-2 text-center">
+            <svg class="w-6 h-6 text-emerald-700 mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span class="text-xs font-bold text-emerald-800">Subir Archivo(s) de Línea (.xls, .xlsx)</span>
+            <span class="text-[11px] text-slate-500">Soporta selección múltiple y HTML-XLS de N4</span>
+            <input id="inputStep2" type="file" accept=".xlsx,.xls,.csv" multiple onchange="handleStep2LineUpload(event)" class="hidden" />
           </label>
         </div>
       </div>
 
-      <!-- PASO 3: Completar y Consolidar Información con Archivo General -->
+      <!-- PASO 3: Consolidación Final con Archivo General -->
       <div class="bg-white rounded-xl border-2 border-indigo-600/25 p-4 shadow-sm flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between mb-2">
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-700 text-white">
               PASO 3 • Consolidación Final
             </span>
-            <span id="badgeStep3" class="text-xs font-semibold text-slate-400">Listo para sincronizar</span>
+            <span id="badgeStep3" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
+              Pendiente
+            </span>
           </div>
           <h2 class="font-bold text-slate-800 text-sm mb-1">3. Completar con Archivo General</h2>
           <p class="text-xs text-slate-500 mb-2">
-            Usa el Archivo General para terminar de llenar y verificar <strong>Load Time</strong>, <strong>Temp.</strong>, <strong>Return</strong> y <strong>Supply</strong> en cada hoja de línea.
+            Verifica y completa las columnas operativas faltantes (<strong>Load Time</strong>, <strong>Temp.</strong>, <strong>Return</strong>, <strong>Supply</strong>, <strong>POD</strong>, <strong>Commodity</strong>) respetando lo llenado en el Paso 2.
           </p>
         </div>
 
         <div class="space-y-2">
-          <button id="btnSyncStep3" type="button" class="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs transition shadow-sm flex items-center justify-center gap-1.5" disabled>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Completar con Archivo General Cargado
+          <button id="btnRunStep3Cached" type="button" onclick="runStep3WithStoredGeneral()" class="w-full py-2 px-3 rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Consolidar con Archivo General Cargado
           </button>
 
-          <label class="flex items-center justify-center w-full py-1.5 px-2 border border-dashed border-indigo-600/40 hover:border-indigo-600 bg-indigo-50/40 hover:bg-indigo-50 rounded-lg cursor-pointer transition text-center">
-            <span class="text-[11px] font-semibold text-indigo-800">O subir archivo general actualizado (.xlsx / .xls)</span>
-            <input id="inputStep3" type="file" accept=".xls,.xlsx,.csv" class="hidden" />
+          <label id="dropStep3" class="flex items-center justify-center w-full py-1.5 px-2 border border-dashed border-indigo-600/40 hover:border-indigo-600 bg-indigo-50/40 hover:bg-indigo-50 rounded-lg cursor-pointer transition text-center">
+            <span class="text-[11px] font-semibold text-indigo-800">O subir nuevo Consolidado General (.xlsx / .xls)</span>
+            <input id="inputStep3" type="file" accept=".xlsx,.xls,.csv" onchange="handleStep3NewGeneralUpload(event)" class="hidden" />
           </label>
         </div>
       </div>
+
     </div>
+
+    <!-- Panel Colapsable de Log de Diagnóstico en Tiempo Real -->
+    <div class="bg-slate-900 text-slate-200 rounded-xl border border-slate-700 overflow-hidden shadow-sm">
+      <div class="px-3.5 py-2 bg-slate-800/90 flex items-center justify-between cursor-pointer select-none" onclick="toggleDiagnosticLog()">
+        <div class="flex items-center gap-2 text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="font-bold text-white">Log de Diagnóstico en Tiempo Real</span>
+          <span id="logSummaryInline" class="text-slate-400 truncate max-w-md sm:max-w-2xl">— Esperando carga de archivo...</span>
+        </div>
+        <span id="logToggleText" class="text-[11px] text-blue-300 font-semibold">Mostrar / Ocultar</span>
+      </div>
+      <div id="diagnosticLogBody" class="px-3.5 py-2.5 text-[11px] font-mono max-h-32 overflow-y-auto space-y-1 bg-slate-950">
+        <div class="text-slate-400">[Sistema] Listo para leer archivos Excel (.xlsx, .xls, .csv) o reportes HTML-XLS de Navis N4.</div>
+      </div>
+    </div>
+
   </section>
 
-  <!-- Barra de Pestañas por Línea Naviera y Acciones de Exportación (Oculta al imprimir) -->
+  <!-- Barra de Pestañas por Línea Naviera y Acciones de Impresión / Exportación (Oculta al imprimir) -->
   <section class="no-print max-w-[1600px] w-full mx-auto px-4 py-2">
     <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
-      <!-- Pestañas de Líneas -->
+      <!-- Pestañas de Líneas Detectadas -->
       <div class="flex flex-wrap items-center gap-2" id="lineTabsContainer">
-        <span class="text-xs font-semibold text-slate-400 px-2">Ninguna línea cargada aún. Sube el archivo del Paso 1 o usa "Probar Demo".</span>
+        <span class="text-xs font-semibold text-slate-400 px-2">Aún no hay líneas detectadas. Sube el Archivo General en el Paso 1.</span>
       </div>
 
-      <!-- Acciones sobre las hojas -->
+      <!-- Botones de Acción sobre las Hojas -->
       <div class="flex flex-wrap items-center gap-2" id="sheetActions" style="display: none;">
-        <button id="btnAddRow" type="button" class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition flex items-center gap-1.5">
-          + Agregar Fila
+        <button type="button" onclick="addEmptyRowToActiveSheet()" class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition flex items-center gap-1 cursor-pointer">
+          + Fila
         </button>
 
-        <button id="btnPrintCurrent" type="button" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-sm">
+        <button type="button" onclick="printSingleSheet()" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-sm cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-          Imprimir Esta Línea
+          Imprimir Hoja Actual
         </button>
 
-        <button id="btnPrintAll" type="button" class="px-3 py-2 rounded-lg bg-[#002B5B] hover:bg-blue-900 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-sm">
+        <button type="button" onclick="printAllSheets()" class="px-3 py-2 rounded-lg bg-[#002855] hover:bg-blue-950 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-sm cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
           Imprimir Todas las Líneas
         </button>
 
-        <button id="btnExportExcel" type="button" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-sm">
+        <button type="button" onclick="exportWorkbookToExcel()" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-sm cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           Descargar Excel (.xlsx)
         </button>
@@ -305,74 +336,112 @@
   <main class="print-container max-w-[1600px] w-full mx-auto px-4 pb-10 flex-1">
     <!-- Estado vacío inicial -->
     <div id="emptyState" class="no-print bg-white rounded-2xl border border-slate-200 p-10 text-center my-4 shadow-sm">
-      <div class="w-16 h-16 rounded-2xl bg-blue-50 text-[#002B5B] flex items-center justify-center mx-auto mb-4">
+      <div class="w-16 h-16 rounded-2xl bg-blue-50 text-[#002855] flex items-center justify-center mx-auto mb-4">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       </div>
-      <h3 class="text-lg font-bold text-slate-800 mb-1">Listo para generar tus Vouchers de Embarque</h3>
-      <p class="text-sm text-slate-500 max-w-xl mx-auto mb-5">
-        Comienza en el <strong>Paso 1</strong> subiendo el Archivo General de Embarque. El sistema detectará automáticamente cuántas líneas navieras contiene, las separará en hojas individuales y luego podrás completarlas con el Paso 2 y Paso 3.
+      <h3 class="text-lg font-bold text-slate-800 mb-1">Sube el Archivo General en el Paso 1 para comenzar</h3>
+      <p class="text-sm text-slate-500 max-w-xl mx-auto mb-4">
+        El sistema identificará automáticamente todas las líneas navieras (<code class="bg-slate-100 px-1.5 py-0.5 rounded">Line Op</code>) contenidas en el archivo y generará una hoja de voucher independiente para cada línea lista para imprimir.
       </p>
       <div class="inline-flex flex-wrap justify-center gap-2 text-xs text-slate-500 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200">
-        <span>✓ Detección automática de Líneas</span>
+        <span>✓ Separación automática por Line Op</span>
         <span>•</span>
-        <span>✓ 1 Hoja por Line Op</span>
+        <span>✓ Tolerante a filas vacías y HTML-XLS</span>
         <span>•</span>
-        <span>✓ Sin sobrescribir datos previos</span>
+        <span>✓ Celdas editables en vivo</span>
         <span>•</span>
-        <span>✓ Impresión Horizontal + Excel</span>
+        <span>✓ Impresión Horizontal por Línea</span>
       </div>
     </div>
 
-    <!-- Contenedor donde se renderizan las hojas de cada línea -->
+    <!-- Contenedor de Hojas Generadas -->
     <div id="sheetsWrapper" class="space-y-8"></div>
   </main>
 
   <script>
     /**
+     * =========================================================================
      * ESTADO GLOBAL DE LA APLICACIÓN
-     * Almacena las hojas indexadas por Line Op (ej. "COS", "CMA", etc.)
-     * y conserva el mapa del Archivo General para el Paso 3.
+     * =========================================================================
      */
     const appState = {
-      sheets: {}, // { [lineOp]: { lineOp, vessel, voyage, rows: [...] } }
-      generalIndex: null, // Map<unit, GeneralRecord> guardado desde el Paso 1 o Paso 3
-      generalFileName: '',
+      sheets: {},             // { [lineOp]: { lineOp, vessel, voyage, rows: [...] } }
+      generalIndex: new Map(), // Índice global por Unit Nbr del archivo consolidado
+      generalMeta: { vessel: '', voyage: '', fileName: '' },
       activeLine: null,
-      printMode: 'SINGLE' // 'SINGLE' | 'ALL'
+      printMode: 'SINGLE'     // 'SINGLE' | 'ALL'
     };
 
-    const MIN_PRINT_ROWS = 12; // Mínimo de filas visuales como en la plantilla oficial
+    const MIN_PRINT_ROWS = 12;
 
-    // Referencias DOM
-    const inputStep1 = document.getElementById('inputStep1');
-    const inputStep2 = document.getElementById('inputStep2');
-    const inputStep3 = document.getElementById('inputStep3');
-    const btnSyncStep3 = document.getElementById('btnSyncStep3');
-    const targetLineStep2 = document.getElementById('targetLineStep2');
-    const lineTabsContainer = document.getElementById('lineTabsContainer');
-    const sheetActions = document.getElementById('sheetActions');
-    const emptyState = document.getElementById('emptyState');
-    const sheetsWrapper = document.getElementById('sheetsWrapper');
+    // Verificar carga de librería SheetJS al iniciar
+    window.addEventListener('DOMContentLoaded', () => {
+      const libBadge = document.getElementById('xlsxLibStatus');
+      if (typeof window.XLSX === 'undefined') {
+        libBadge.textContent = 'Error cargando Excel';
+        libBadge.className = 'text-[11px] px-2.5 py-1 rounded-full bg-red-500/30 text-red-100 border border-red-400 font-bold';
+        logDiagnostic('ERROR CRÍTICO: No se pudo cargar la librería SheetJS desde el CDN. Verifica tu conexión a internet.', 'error');
+        showStatus('No se pudo cargar el motor de lectura de Excel (SheetJS). Revisa tu conexión a internet y recarga la página.', 'error');
+      } else {
+        logDiagnostic(`Motor SheetJS v${XLSX.version || 'OK'} inicializado correctamente.`, 'success');
+      }
 
-    // Utilidades de notificación visual (sin alert)
+      setupDragAndDrop('dropStep1', 'inputStep1', (files) => processStep1File(files[0]));
+      setupDragAndDrop('dropStep2', 'inputStep2', (files) => processStep2Files(files));
+      setupDragAndDrop('dropStep3', 'inputStep3', (files) => processStep3File(files[0]));
+    });
+
+    /**
+     * =========================================================================
+     * UTILIDADES DE DIAGNÓSTICO, NOTIFICACIÓN Y LIMPIEZA
+     * =========================================================================
+     */
+    function logDiagnostic(msg, level = 'info') {
+      const container = document.getElementById('diagnosticLogBody');
+      const summary = document.getElementById('logSummaryInline');
+      const time = new Date().toLocaleTimeString('es-EC', { hour12: false });
+
+      const line = document.createElement('div');
+      if (level === 'success') line.className = 'text-emerald-400';
+      else if (level === 'warning') line.className = 'text-amber-300';
+      else if (level === 'error') line.className = 'text-red-400 font-bold';
+      else line.className = 'text-slate-300';
+
+      line.textContent = `[${time}] ${msg}`;
+      container.appendChild(line);
+      container.scrollTop = container.scrollHeight;
+      summary.textContent = `— ${msg}`;
+    }
+
+    function toggleDiagnosticLog() {
+      const body = document.getElementById('diagnosticLogBody');
+      body.classList.toggle('hidden');
+    }
+
     function showStatus(message, type = 'info') {
       const banner = document.getElementById('statusBanner');
       const icon = document.getElementById('statusIcon');
       const text = document.getElementById('statusText');
 
-      banner.classList.remove('hidden', 'bg-blue-50', 'border-blue-200', 'text-blue-800', 'bg-emerald-50', 'border-emerald-200', 'text-emerald-800', 'bg-amber-50', 'border-amber-200', 'text-amber-800', 'bg-red-50', 'border-red-200', 'text-red-800');
+      banner.classList.remove(
+        'hidden',
+        'bg-blue-50', 'border-blue-200', 'text-blue-900',
+        'bg-emerald-50', 'border-emerald-200', 'text-emerald-900',
+        'bg-amber-50', 'border-amber-200', 'text-amber-900',
+        'bg-red-50', 'border-red-200', 'text-red-900'
+      );
 
       if (type === 'success') {
-        banner.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-800');
+        banner.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-900');
         icon.textContent = '✅';
       } else if (type === 'warning') {
-        banner.classList.add('bg-amber-50', 'border-amber-200', 'text-amber-800');
+        banner.classList.add('bg-amber-50', 'border-amber-200', 'text-amber-900');
         icon.textContent = '⚠️';
       } else if (type === 'error') {
-        banner.classList.add('bg-red-50', 'border-red-200', 'text-red-800');
+        banner.classList.add('bg-red-50', 'border-red-200', 'text-red-900');
         icon.textContent = '❌';
       } else {
-        banner.classList.add('bg-blue-50', 'border-blue-200', 'text-blue-800');
+        banner.classList.add('bg-blue-50', 'border-blue-200', 'text-blue-900');
         icon.textContent = 'ℹ️';
       }
 
@@ -383,50 +452,70 @@
       document.getElementById('statusBanner').classList.add('hidden');
     }
 
-    // Limpieza y normalización de textos
+    function setBadge(id, text, styleType) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = text;
+      if (styleType === 'done') {
+        el.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+      } else if (styleType === 'warn') {
+        el.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300';
+      } else {
+        el.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600';
+      }
+    }
+
+    function setupDragAndDrop(dropId, inputId, callback) {
+      const dropEl = document.getElementById(dropId);
+      if (!dropEl) return;
+
+      ['dragenter', 'dragover'].forEach(evtName => {
+        dropEl.addEventListener(evtName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropEl.classList.add('dropzone-active');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(evtName => {
+        dropEl.addEventListener(evtName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropEl.classList.remove('dropzone-active');
+        });
+      });
+
+      dropEl.addEventListener('drop', (e) => {
+        const files = Array.from(e.dataTransfer?.files || []);
+        if (files.length > 0) {
+          callback(files);
+        }
+      });
+    }
+
     function cleanStr(val) {
       if (val === null || val === undefined) return '';
-      const str = String(val).trim();
-      if (/^(null|undefined|nan|-|n\/a)$/i.test(str)) return '';
+      const str = String(val).replace(/\u00A0/g, ' ').trim();
+      if (/^(null|undefined|nan|-|--|n\/a)$/i.test(str)) return '';
       if (/^null\s+null$/i.test(str)) return '';
       return str;
     }
 
+    function normalizeHeader(val) {
+      return cleanStr(val).toLowerCase().replace(/[.:()]/g, '').replace(/\s+/g, ' ').trim();
+    }
+
     function normalizeUnit(val) {
-      return cleanStr(val).toUpperCase().replace(/\s+/g, '');
+      return cleanStr(val).toUpperCase().replace(/[^A-Z0-9]/g, '');
     }
 
     function isEmptyCell(val) {
       return cleanStr(val) === '';
     }
 
-    /**
-     * Separa "CMA CGM COPPER 0MH34W1MA" en Vessel y Voyage
-     */
-    function parseVesselAndVoyage(rawVessel) {
-      const cleaned = cleanStr(rawVessel);
-      if (!cleaned) return { vessel: '', voyage: '' };
-      const parts = cleaned.split(/\s+/);
-      if (parts.length >= 2) {
-        const lastToken = parts[parts.length - 1];
-        // Si el último bloque contiene números (ej. 0MH34W1MA), lo tomamos como Voyage
-        if (/\d/.test(lastToken)) {
-          return {
-            vessel: parts.slice(0, -1).join(' '),
-            voyage: lastToken
-          };
-        }
-      }
-      return { vessel: cleaned, voyage: '' };
-    }
-
-    /**
-     * Formatea temperatura numérica o texto para las columnas de monitoreo
-     */
-    function formatTempValue(val) {
+    function formatTemp(val) {
       const s = cleanStr(val);
       if (!s) return '';
-      // Si ya tiene 'c' o '°', devolver limpio
       if (/c$/i.test(s)) return s;
       const num = parseFloat(s.replace(',', '.'));
       if (!isNaN(num)) {
@@ -435,13 +524,9 @@
       return s;
     }
 
-    /**
-     * Formatea fechas/horas provenientes de Excel (serial o texto)
-     */
-    function formatExcelDateTime(val) {
+    function formatDateTime(val) {
       if (val === null || val === undefined || val === '') return '';
       if (typeof val === 'number' && val > 20000) {
-        // Convertir serial de fecha Excel a DD/MM/YYYY HH:mm
         const date = new Date(Math.round((val - 25569) * 86400 * 1000));
         const dd = String(date.getUTCDate()).padStart(2, '0');
         const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
@@ -454,931 +539,554 @@
     }
 
     /**
-     * Lee cualquier archivo Excel (.xls / .xlsx) como matriz de filas (array of arrays)
+     * Extrae Vessel y Voyage de cadenas como "CMA CGM COPPER 0MH34W1MA"
      */
-    function readWorkbookMatrix(file) {
+    function parseVesselAndVoyage(raw) {
+      const cleaned = cleanStr(raw);
+      if (!cleaned) return { vessel: '', voyage: '' };
+      const parts = cleaned.split(/\s+/);
+      if (parts.length >= 2) {
+        const last = parts[parts.length - 1];
+        if (/\d/.test(last)) {
+          return {
+            vessel: parts.slice(0, -1).join(' '),
+            voyage: last
+          };
+        }
+      }
+      return { vessel: cleaned, voyage: '' };
+    }
+
+    /**
+     * Extrae Vessel del nombre del archivo general (ej. "COOPER CMA2026129 EXPO .xlsx")
+     */
+    function extractVesselFromFileName(fileName) {
+      const base = fileName.replace(/\.[^/.]+$/, '').trim();
+      const tokens = base.split(/\s+/);
+      if (!tokens.length) return '';
+      // Tomar palabras antes del código de viaje o EXPO/IMPO
+      const vesselTokens = [];
+      for (const t of tokens) {
+        if (/^(expo|impo|descarga|embarque|report)$/i.test(t)) break;
+        if (/^[A-Z]{2,4}\d{4,}/i.test(t)) break;
+        vesselTokens.push(t);
+      }
+      return vesselTokens.join(' ').toUpperCase();
+    }
+
+    /**
+     * =========================================================================
+     * LECTURA ROBUSTA DE ARCHIVOS EXCEL / XLS / HTML-XLS DE NAVIS N4
+     * =========================================================================
+     */
+    function readExcelAnyFormat(file) {
       return new Promise((resolve, reject) => {
+        if (typeof window.XLSX === 'undefined') {
+          reject(new Error('La librería SheetJS (XLSX) no está disponible.'));
+          return;
+        }
+
         const reader = new FileReader();
         reader.onload = (e) => {
           try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array', raw: false });
+            const buffer = e.target.result;
+            const uint8 = new Uint8Array(buffer);
+
+            // Detectar si el archivo .xls es en realidad una tabla HTML exportada por Navis N4
+            const headSample = new TextDecoder('utf-8', { fatal: false }).decode(uint8.slice(0, 600)).trim().toLowerCase();
+            let workbook;
+
+            if (headSample.startsWith('<html') || headSample.startsWith('<!doctype') || headSample.includes('<table')) {
+              const htmlText = new TextDecoder('utf-8', { fatal: false }).decode(uint8);
+              workbook = XLSX.read(htmlText, { type: 'string', raw: false });
+              logDiagnostic(`Archivo "${file.name}" detectado como HTML-XLS (Navis N4).`);
+            } else {
+              workbook = XLSX.read(uint8, { type: 'array', raw: false });
+            }
+
+            if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+              reject(new Error('El archivo no contiene hojas legibles.'));
+              return;
+            }
+
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
-            const matrix = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+            const matrix = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', blankrows: true });
+
             resolve({ matrix, sheetName: firstSheetName, workbook });
           } catch (err) {
             reject(err);
           }
         };
-        reader.onerror = reject;
+        reader.onerror = () => reject(new Error(`No se pudo leer el archivo "${file.name}" desde el disco.`));
         reader.readAsArrayBuffer(file);
       });
     }
 
     /**
-     * =========================================================================
-     * PARSER DEL ARCHIVO GENERAL DE EMBARQUE (COOPER ... EXPO.xlsx / N4)
-     * Extrae todos los contenedores, detecta todas las líneas (Line Op) y
-     * extrae Vessel / Voyage desde el nombre del archivo o columnas de visita.
-     * =========================================================================
+     * Busca dinámicamente la fila de encabezados en las primeras 25 filas
      */
-    function parseGeneralExpoWorkbook(matrix, fileName) {
-      let headerIdx = -1;
-      for (let r = 0; r < Math.min(matrix.length, 25); r++) {
-        const norm = (matrix[r] || []).map(x => cleanStr(x).toLowerCase());
-        if (norm.includes('unit nbr') || norm.includes('unit')) {
-          headerIdx = r;
-          break;
-        }
-      }
-      if (headerIdx === -1) {
-        throw new Error('No se encontró la columna "Unit Nbr" o "Unit" en el archivo general.');
-      }
-
-      const headers = matrix[headerIdx].map(h => cleanStr(h).toLowerCase());
-      const findExactOrPartial = (exactList, partialList = []) => {
-        let idx = headers.findIndex(h => exactList.includes(h));
-        if (idx === -1 && partialList.length) {
-          idx = headers.findIndex(h => partialList.some(p => h.includes(p)));
-        }
-        return idx;
-      };
-
-      const idxUnit = findExactOrPartial(['unit nbr', 'unit'], ['unit nbr']);
-      const idxLine = findExactOrPartial(['line op', 'line'], ['line op']);
-      const idxVisit = findExactOrPartial(['o/b actual visit', 'o/b declared visit', 'vessel', 'carrier'], ['actual visit', 'visit']);
-      const idxLoaded = findExactOrPartial(['loaded', 'load time'], ['loaded']);
-      const idxTempReq = findExactOrPartial(['temp required (c)', 'temp required', 'temp.', 'temp'], ['temp required']);
-      const idxVent = findExactOrPartial(['vent.', 'vent'], ['vent']);
-      const idxShipper = findExactOrPartial(['shipper', 'export', 'exporter'], ['shipper']);
-      const idxBooking = findExactOrPartial(['booking'], ['booking']);
-      const idxReturn = findExactOrPartial(['last temp read (c)', 'last temp read', 'return'], ['last temp read']);
-      const idxSupply = findExactOrPartial(['last supply temp (c)', 'last supply temp', 'supply'], ['last supply temp']);
-      const idxCmdty = findExactOrPartial(['cmdty dponline', 'commodity', 'cmdty'], ['cmdty']);
-      const idxPol = findExactOrPartial(['pol']);
-      const idxPod = findExactOrPartial(['pod']);
-      const idxRemarks = findExactOrPartial(['remarks', 'remark']);
-
-      // Deducir Vessel y Voyage desde el nombre del archivo si viene (ej. "COOPER CMA2026129 EXPO .xlsx")
-      let inferredVessel = '';
-      let inferredVoyage = '';
-      const cleanFileBase = fileName.replace(/\.[^/.]+$/, '').replace(/\b(expo|impo|voucher|report)\b/gi, '').trim();
-      const fileTokens = cleanFileBase.split(/\s+/).filter(Boolean);
-      if (fileTokens.length >= 2) {
-        const lastTok = fileTokens[fileTokens.length - 1];
-        if (/\d/.test(lastTok)) {
-          inferredVoyage = lastTok;
-          inferredVessel = fileTokens.slice(0, -1).join(' ');
-        } else {
-          inferredVessel = cleanFileBase;
-        }
-      } else if (fileTokens.length === 1) {
-        inferredVessel = fileTokens[0];
-      }
-
-      const records = [];
-      const generalMap = new Map();
-
-      for (let r = headerIdx + 1; r < matrix.length; r++) {
+    function findHeaderRowIndex(matrix, keyCandidates) {
+      const limit = Math.min(matrix.length, 25);
+      for (let r = 0; r < limit; r++) {
         const row = matrix[r] || [];
-        const unit = idxUnit >= 0 ? normalizeUnit(row[idxUnit]) : '';
-        if (!unit || !/^[A-Z]{4}\d{5,7}$/.test(unit)) continue;
-
-        const lineOp = idxLine >= 0 && cleanStr(row[idxLine])
-          ? cleanStr(row[idxLine]).toUpperCase()
-          : 'SIN_LINEA';
-
-        const rawVisit = idxVisit >= 0 ? cleanStr(row[idxVisit]) : '';
-        const shipperVal = idxShipper >= 0 ? cleanStr(row[idxShipper]) : '';
-        const bookingVal = idxBooking >= 0 ? cleanStr(row[idxBooking]) : '';
-
-        const rec = {
-          unit,
-          lineOp,
-          rawVisit,
-          tempReq: idxTempReq >= 0 ? formatTempValue(row[idxTempReq]) : '',
-          vent: idxVent >= 0 ? cleanStr(row[idxVent]) : '',
-          exportName: shipperVal || bookingVal,
-          commodity: idxCmdty >= 0 ? cleanStr(row[idxCmdty]) : '',
-          pol: idxPol >= 0 ? cleanStr(row[idxPol]) : '',
-          pod: idxPod >= 0 ? cleanStr(row[idxPod]) : '',
-          loadTime: idxLoaded >= 0 ? formatExcelDateTime(row[idxLoaded]) : '',
-          tempActual: idxTempReq >= 0 ? formatTempValue(row[idxTempReq]) : '',
-          returnTemp: idxReturn >= 0 ? formatTempValue(row[idxReturn]) : '',
-          supplyTemp: idxSupply >= 0 ? formatTempValue(row[idxSupply]) : '',
-          remarks: idxRemarks >= 0 ? cleanStr(row[idxRemarks]) : ''
-        };
-
-        records.push(rec);
-        generalMap.set(unit, rec);
+        const normCells = row.map(c => normalizeHeader(c));
+        const matched = keyCandidates.some(cand => normCells.includes(cand));
+        if (matched) {
+          return r;
+        }
       }
-
-      return { records, generalMap, inferredVessel, inferredVoyage };
+      return -1;
     }
 
     /**
      * =========================================================================
-     * PASO 1: SUBIR ARCHIVO GENERAL -> DETECTA LÍNEAS Y SEPARA POR HOJAS
+     * PASO 1: SUBIR ARCHIVO GENERAL DE EMBARQUE -> DETECTAR LÍNEAS Y SEPARAR
      * =========================================================================
      */
-    inputStep1.addEventListener('change', async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+    function handleStep1GeneralUpload(event) {
+      const files = Array.from(event.target.files || []);
+      event.target.value = ''; // Permitir volver a subir el mismo archivo
+      if (!files.length) return;
+      processStep1File(files[0]);
+    }
 
+    async function processStep1File(file) {
+      logDiagnostic(`Iniciando lectura de Archivo General (Paso 1): "${file.name}"...`);
       try {
-        const { matrix } = await readWorkbookMatrix(file);
-        const parsed = parseGeneralExpoWorkbook(matrix, file.name);
+        const { matrix, sheetName } = await readExcelAnyFormat(file);
+        logDiagnostic(`Hoja "${sheetName}" leída (${matrix.length} filas totales). Buscando encabezados...`);
 
-        if (parsed.records.length === 0) {
-          showStatus(`No se encontraron contenedores válidos en <strong>${file.name}</strong>.`, 'warning');
-          inputStep1.value = '';
-          return;
+        const headerIdx = findHeaderRowIndex(matrix, ['unit nbr', 'unit', 'container', 'contenedor']);
+        if (headerIdx === -1) {
+          throw new Error('No se encontró la columna "Unit Nbr" o "Unit" en las primeras 25 filas.');
         }
 
-        // Reiniciar hojas y agrupar automáticamente por cada Line Op detectado
-        appState.sheets = {};
-        appState.generalIndex = parsed.generalMap;
-        appState.generalFileName = file.name;
+        const rawHeaders = matrix[headerIdx].map(h => cleanStr(h));
+        const normHeaders = rawHeaders.map(h => normalizeHeader(h));
+        logDiagnostic(`Encabezados detectados en fila ${headerIdx + 1}: [${rawHeaders.filter(Boolean).slice(0, 10).join(', ')}...]`);
 
-        parsed.records.forEach(rec => {
-          const lineKey = rec.lineOp;
-          if (!appState.sheets[lineKey]) {
-            const visitParsed = parseVesselAndVoyage(rec.rawVisit);
-            appState.sheets[lineKey] = {
-              lineOp: lineKey,
-              vessel: parsed.inferredVessel || visitParsed.vessel || '',
-              voyage: visitParsed.voyage || parsed.inferredVoyage || '',
+        const findCol = (exactList, partialList = []) => {
+          let idx = normHeaders.findIndex(h => exactList.includes(h));
+          if (idx === -1 && partialList.length) {
+            idx = normHeaders.findIndex(h => partialList.some(p => h.includes(p)));
+          }
+          return idx;
+        };
+
+        const idxUnit = findCol(['unit nbr', 'unit', 'container', 'contenedor'], ['unit nbr']);
+        const idxLine = findCol(['line op', 'line', 'linea', 'operator'], ['line op']);
+        const idxObVisit = findCol(['o/b actual visit', 'ob actual visit', 'voyage', 'visit'], ['actual visit']);
+        const idxVessel = findCol(['vessel', 'nave']);
+        const idxLoaded = findCol(['loaded', 'load time', 'fecha embarque'], ['loaded']);
+        const idxTempReq = findCol(['temp required c', 'temp required', 'temp', 'set temp'], ['temp required']);
+        const idxReturn = findCol(['last temp read c', 'last temp read', 'return'], ['last temp read']);
+        const idxSupply = findCol(['last supply temp c', 'last supply temp', 'supply'], ['last supply temp']);
+        const idxPod = findCol(['pod', 'discharge port']);
+        const idxPol = findCol(['pol', 'load port']);
+        const idxCmdty = findCol(['cmdty dponline', 'commodity', 'cmdty', 'mercaderia'], ['cmdty']);
+        const idxVent = findCol(['vent', 'ventilation']);
+        const idxExport = findCol(['shipper', 'export', 'exporter']);
+        const idxRemarks = findCol(['remarks', 'remark', 'observaciones']);
+
+        if (idxLine === -1) {
+          logDiagnostic('Advertencia: No se encontró columna "Line Op"; se agrupará bajo "GENERAL".', 'warning');
+        }
+
+        // Reiniciar estado de hojas y mapa general
+        appState.sheets = {};
+        appState.generalIndex = new Map();
+        const vesselFromFile = extractVesselFromFileName(file.name);
+        let detectedVessel = vesselFromFile;
+        let detectedVoyage = '';
+        let totalContainers = 0;
+
+        for (let r = headerIdx + 1; r < matrix.length; r++) {
+          const row = matrix[r] || [];
+          const unit = idxUnit >= 0 ? normalizeUnit(row[idxUnit]) : '';
+          if (!unit || !/^[A-Z]{4}\d{5,7}$/.test(unit)) continue;
+
+          const lineOp = idxLine >= 0 && cleanStr(row[idxLine]) ? cleanStr(row[idxLine]).toUpperCase() : 'SIN_LINEA';
+          const obVisit = idxObVisit >= 0 ? cleanStr(row[idxObVisit]) : '';
+          const rowVessel = idxVessel >= 0 ? cleanStr(row[idxVessel]) : '';
+
+          if (rowVessel && !detectedVessel) detectedVessel = rowVessel;
+          if (obVisit && !detectedVoyage) detectedVoyage = obVisit;
+
+          const record = {
+            unit,
+            lineOp,
+            vessel: rowVessel || detectedVessel,
+            voyage: obVisit || detectedVoyage,
+            tempReq: idxTempReq >= 0 ? formatTemp(row[idxTempReq]) : '',
+            vent: idxVent >= 0 ? cleanStr(row[idxVent]) : '',
+            exportName: idxExport >= 0 ? cleanStr(row[idxExport]) : '',
+            commodity: idxCmdty >= 0 ? cleanStr(row[idxCmdty]) : '',
+            pol: idxPol >= 0 ? cleanStr(row[idxPol]) : '',
+            pod: idxPod >= 0 ? cleanStr(row[idxPod]) : '',
+            loadTime: idxLoaded >= 0 ? formatDateTime(row[idxLoaded]) : '',
+            tempActual: idxTempReq >= 0 ? formatTemp(row[idxTempReq]) : '',
+            returnTemp: idxReturn >= 0 ? formatTemp(row[idxReturn]) : '',
+            supplyTemp: idxSupply >= 0 ? formatTemp(row[idxSupply]) : '',
+            remarks: idxRemarks >= 0 ? cleanStr(row[idxRemarks]) : ''
+          };
+
+          // Guardar en el índice general para el Paso 3
+          appState.generalIndex.set(unit, record);
+
+          // Crear hoja independiente por Line Op
+          if (!appState.sheets[lineOp]) {
+            appState.sheets[lineOp] = {
+              lineOp,
+              vessel: record.vessel || detectedVessel,
+              voyage: record.voyage || detectedVoyage,
               rows: []
             };
           }
 
           // Evitar duplicados dentro de la misma línea
-          const exists = appState.sheets[lineKey].rows.some(r => r.unit === rec.unit);
-          if (!exists) {
-            appState.sheets[lineKey].rows.push({
-              unit: rec.unit,
-              tempReq: rec.tempReq,
-              vent: rec.vent,
-              exportName: rec.exportName,
-              commodity: rec.commodity,
-              pol: rec.pol,
-              pod: rec.pod,
-              loadTime: rec.loadTime,
-              tempActual: rec.tempActual,
-              returnTemp: rec.returnTemp,
-              supplyTemp: rec.supplyTemp,
-              remarks: rec.remarks
-            });
+          if (!appState.sheets[lineOp].rows.some(item => item.unit === unit)) {
+            appState.sheets[lineOp].rows.push({ ...record });
+            totalContainers++;
           }
+        }
+
+        const linesFound = Object.keys(appState.sheets);
+        if (linesFound.length === 0 || totalContainers === 0) {
+          throw new Error('No se detectaron contenedores válidos (formato ABCD1234567) en el archivo.');
+        }
+
+        // Asegurar que todas las hojas hereden Vessel/Voyage si alguna fila inicial no lo tenía
+        linesFound.forEach(line => {
+          if (!appState.sheets[line].vessel) appState.sheets[line].vessel = detectedVessel;
+          if (!appState.sheets[line].voyage) appState.sheets[line].voyage = detectedVoyage;
         });
 
-        const lineKeys = Object.keys(appState.sheets);
-        appState.activeLine = lineKeys[0] || null;
+        appState.generalMeta = {
+          vessel: detectedVessel,
+          voyage: detectedVoyage,
+          fileName: file.name
+        };
+        appState.activeLine = linesFound[0];
 
-        // Habilitar botón de consolidación del Paso 3
-        btnSyncStep3.disabled = false;
-
-        // Resumen detallado de líneas detectadas
-        const breakdown = lineKeys.map(k => `<strong>${k}</strong> (${appState.sheets[k].rows.length})`).join(', ');
-        document.getElementById('badgeStep1').textContent = `${lineKeys.length} Línea(s) detectada(s)`;
-        document.getElementById('badgeStep1').className = 'text-xs font-bold text-emerald-700';
-
+        const breakdownText = linesFound.map(l => `${l} (${appState.sheets[l].rows.length})`).join(', ');
+        setBadge('badgeStep1', `Completado (${linesFound.length} líneas / ${totalContainers} unid.)`, 'done');
+        logDiagnostic(`Paso 1 exitoso: ${linesFound.length} líneas detectadas -> ${breakdownText}.`, 'success');
         showStatus(
-          `<strong>Paso 1 completado:</strong> Se detectaron <strong>${lineKeys.length} líneas navieras</strong> (${breakdown}) con un total de ${parsed.records.length} contenedores. Cada línea ya tiene su propia hoja lista para completar en el Paso 2.`,
+          `<strong>Paso 1 Completado:</strong> Se detectaron <strong>${linesFound.length} líneas navieras</strong> con un total de <strong>${totalContainers} contenedores</strong> (${breakdownText}). Ahora sube el archivo de cada línea en el Paso 2.`,
           'success'
         );
+
         refreshUI();
       } catch (err) {
-        console.error(err);
-        showStatus(`Error al leer el Archivo General: ${err.message}`, 'error');
+        setBadge('badgeStep1', 'Error al leer', 'warn');
+        logDiagnostic(`Error en Paso 1: ${err.message}`, 'error');
+        showStatus(`Error al procesar "${file.name}": ${err.message}`, 'error');
       }
-
-      inputStep1.value = '';
-    });
-
-    /**
-     * =========================================================================
-     * PASO 2: SUBIR ARCHIVO(S) DE LÍNEA -> COMPLETA LO QUE ESTABA VACÍO ANTES
-     * =========================================================================
-     */
-    inputStep2.addEventListener('change', async (e) => {
-      const files = Array.from(e.target.files || []);
-      if (!files.length) return;
-
-      if (Object.keys(appState.sheets).length === 0) {
-        showStatus('Primero debes subir el Archivo General en el <strong>Paso 1</strong> para detectar las líneas.', 'warning');
-        inputStep2.value = '';
-        return;
-      }
-
-      let totalMatchedUnits = 0;
-      let totalFilledCells = 0;
-      const updatedLines = new Set();
-
-      for (const file of files) {
-        try {
-          const { matrix } = await readWorkbookMatrix(file);
-          const result = applyStep2LineFile(matrix, file.name, targetLineStep2.value);
-          totalMatchedUnits += result.matchedUnits;
-          totalFilledCells += result.filledCells;
-          if (result.targetLine) updatedLines.add(result.targetLine);
-        } catch (err) {
-          console.error(err);
-          showStatus(`Error en <strong>${file.name}</strong>: ${err.message}`, 'error');
-        }
-      }
-
-      inputStep2.value = '';
-      if (updatedLines.size > 0) {
-        document.getElementById('badgeStep2').textContent = `${totalFilledCells} celdas completadas`;
-        document.getElementById('badgeStep2').className = 'text-xs font-bold text-emerald-700';
-
-        showStatus(
-          `<strong>Paso 2 completado (${Array.from(updatedLines).join(', ')}):</strong> Se cruzaron ${totalMatchedUnits} contenedores y se rellenaron <strong>${totalFilledCells} celdas vacías</strong> que faltaban anteriormente (<em>Export</em>, <em>Vent.</em>, <em>Commodity</em>, <em>POL</em>, <em>Remarks</em>, etc.). Ahora puedes ejecutar el Paso 3.`,
-          'success'
-        );
-        refreshUI();
-      }
-    });
-
-    function applyStep2LineFile(matrix, fileName, selectedTargetLine) {
-      let rawVessel = '';
-      let detectedLineInHeader = '';
-      let headerIdx = -1;
-
-      // Buscar metadatos superiores (Vessel, Line) y fila de encabezados ("Unit")
-      for (let r = 0; r < Math.min(matrix.length, 25); r++) {
-        const row = matrix[r] || [];
-        for (let c = 0; c < row.length; c++) {
-          const cell = cleanStr(row[c]);
-          const lower = cell.toLowerCase();
-
-          if (lower === 'vessel' || lower === 'vessel:') {
-            for (let k = c + 1; k < row.length; k++) {
-              if (cleanStr(row[k])) {
-                rawVessel = cleanStr(row[k]);
-                break;
-              }
-            }
-          }
-
-          if (lower === 'line' || lower === 'line op' || lower === 'line:') {
-            for (let k = c + 1; k < row.length; k++) {
-              if (cleanStr(row[k])) {
-                detectedLineInHeader = cleanStr(row[k]).toUpperCase();
-                break;
-              }
-            }
-          }
-        }
-
-        const norm = row.map(x => cleanStr(x).toLowerCase());
-        if (norm.includes('unit') || norm.includes('unit nbr') || norm.includes('contenedor')) {
-          headerIdx = r;
-          break;
-        }
-      }
-
-      if (headerIdx === -1) {
-        throw new Error('No se encontró la columna "Unit" en el archivo de línea.');
-      }
-
-      const headers = matrix[headerIdx].map(h => cleanStr(h).toLowerCase());
-      const findCol = (cands) => headers.findIndex(h => cands.some(c => h === c || h.includes(c)));
-
-      const idxUnit = findCol(['unit', 'unit nbr', 'contenedor']);
-      const idxLine = findCol(['line op', 'line']);
-      const idxTemp = findCol(['temp.', 'temp', 'temp required']);
-      const idxVent = findCol(['vent.', 'vent']);
-      const idxShipper = findCol(['shipper', 'export', 'exporter']);
-      const idxBooking = findCol(['booking']);
-      const idxCommodity = findCol(['commodity', 'cmdty']);
-      const idxPol = findCol(['pol']);
-      const idxPod = findCol(['pod']);
-      const idxLoadTime = findCol(['load time', 'loaded']);
-      const idxReturn = findCol(['return']);
-      const idxSupply = findCol(['supply']);
-      const idxRemarks = findCol(['remarks', 'remark']);
-
-      const file2Map = new Map();
-      let detectedLineInRows = '';
-
-      for (let r = headerIdx + 1; r < matrix.length; r++) {
-        const row = matrix[r] || [];
-        const unit = idxUnit >= 0 ? normalizeUnit(row[idxUnit]) : '';
-        if (!unit || !/^[A-Z]{4}\d{5,7}$/.test(unit)) continue;
-
-        if (!detectedLineInRows && idxLine >= 0 && cleanStr(row[idxLine])) {
-          detectedLineInRows = cleanStr(row[idxLine]).toUpperCase();
-        }
-
-        const shipperVal = idxShipper >= 0 ? cleanStr(row[idxShipper]) : '';
-        const bookingVal = idxBooking >= 0 ? cleanStr(row[idxBooking]) : '';
-
-        file2Map.set(unit, {
-          tempReq: idxTemp >= 0 ? cleanStr(row[idxTemp]) : '',
-          vent: idxVent >= 0 ? cleanStr(row[idxVent]) : '',
-          exportName: shipperVal || bookingVal,
-          commodity: idxCommodity >= 0 ? cleanStr(row[idxCommodity]) : '',
-          pol: idxPol >= 0 ? cleanStr(row[idxPol]) : '',
-          pod: idxPod >= 0 ? cleanStr(row[idxPod]) : '',
-          loadTime: idxLoadTime >= 0 ? formatExcelDateTime(row[idxLoadTime]) : '',
-          returnTemp: idxReturn >= 0 ? cleanStr(row[idxReturn]) : '',
-          supplyTemp: idxSupply >= 0 ? cleanStr(row[idxSupply]) : '',
-          remarks: idxRemarks >= 0 ? cleanStr(row[idxRemarks]) : ''
-        });
-      }
-
-      // Determinar qué hoja de línea actualizar
-      let targetLine = selectedTargetLine;
-      if (targetLine === 'AUTO') {
-        const candidateLine = detectedLineInHeader || detectedLineInRows;
-        if (candidateLine && appState.sheets[candidateLine]) {
-          targetLine = candidateLine;
-        } else {
-          // Buscar la línea que tenga mayor coincidencia de contenedores con este archivo
-          let bestLine = appState.activeLine;
-          let maxHits = -1;
-          Object.keys(appState.sheets).forEach(lineKey => {
-            const hits = appState.sheets[lineKey].rows.filter(r => file2Map.has(r.unit)).length;
-            if (hits > maxHits) {
-              maxHits = hits;
-              bestLine = lineKey;
-            }
-          });
-          targetLine = bestLine;
-        }
-      }
-
-      const sheet = appState.sheets[targetLine];
-      if (!sheet) {
-        throw new Error(`La línea "${targetLine}" no existe en las hojas detectadas en el Paso 1.`);
-      }
-
-      // Completar Vessel / Voyage de cabecera si venían más completos en el archivo de línea
-      if (rawVessel) {
-        const parsedV = parseVesselAndVoyage(rawVessel);
-        if (parsedV.vessel) sheet.vessel = parsedV.vessel;
-        if (parsedV.voyage) sheet.voyage = parsedV.voyage;
-      }
-
-      let matchedUnits = 0;
-      let filledCells = 0;
-
-      // Rellenar ÚNICAMENTE celdas que estaban vacías anteriormente en esa línea
-      const fieldsToFill = ['tempReq', 'vent', 'exportName', 'commodity', 'pol', 'pod', 'loadTime', 'returnTemp', 'supplyTemp', 'remarks'];
-
-      sheet.rows.forEach(row => {
-        const incoming = file2Map.get(row.unit);
-        if (!incoming) return;
-        matchedUnits++;
-
-        fieldsToFill.forEach(field => {
-          if (isEmptyCell(row[field]) && !isEmptyCell(incoming[field])) {
-            row[field] = incoming[field];
-            filledCells++;
-          }
-        });
-      });
-
-      appState.activeLine = targetLine;
-      return { targetLine, matchedUnits, filledCells };
     }
 
     /**
      * =========================================================================
-     * PASO 3: USAR ARCHIVO GENERAL PARA TERMINAR DE COMPLETAR LA INFORMACIÓN
+     * PASO 2: SUBIR ARCHIVO(S) DE LÍNEA -> COMPLETAR CAMPOS VACÍOS DE ESA LÍNEA
      * =========================================================================
      */
-    btnSyncStep3.addEventListener('click', () => {
-      if (!appState.generalIndex || Object.keys(appState.sheets).length === 0) {
-        showStatus('Primero debes subir el Archivo General en el <strong>Paso 1</strong>.', 'warning');
+    function handleStep2LineUpload(event) {
+      const files = Array.from(event.target.files || []);
+      event.target.value = '';
+      if (!files.length) return;
+      processStep2Files(files);
+    }
+
+    async function processStep2Files(files) {
+      if (Object.keys(appState.sheets).length === 0) {
+        showStatus('Primero debes subir el <strong>Archivo General de Embarque en el Paso 1</strong> para crear las hojas por línea.', 'warning');
+        logDiagnostic('Paso 2 detenido: No existen hojas creadas en el Paso 1.', 'warning');
         return;
       }
-      const result = applyStep3Consolidation(appState.generalIndex);
-      document.getElementById('badgeStep3').textContent = `${result.filledCells} datos completados`;
-      document.getElementById('badgeStep3').className = 'text-xs font-bold text-indigo-700';
 
+      let totalFilesOk = 0;
+      let totalMatchedUnits = 0;
+      let totalFieldsCompleted = 0;
+      const linesUpdatedSet = new Set();
+
+      for (const file of files) {
+        logDiagnostic(`Leyendo Archivo de Línea (Paso 2): "${file.name}"...`);
+        try {
+          const { matrix } = await readExcelAnyFormat(file);
+
+          // Buscar metadatos superiores (Vessel, Line) antes de la tabla
+          let rawVesselTop = '';
+          let lineOpTop = '';
+
+          for (let r = 0; r < Math.min(matrix.length, 25); r++) {
+            const row = matrix[r] || [];
+            for (let c = 0; c < row.length; c++) {
+              const cellNorm = normalizeHeader(row[c]);
+              if (cellNorm === 'vessel') {
+                for (let k = c + 1; k < row.length; k++) {
+                  if (cleanStr(row[k])) { rawVesselTop = cleanStr(row[k]); break; }
+                }
+              }
+              if (cellNorm === 'line' || cellNorm === 'line op') {
+                for (let k = c + 1; k < row.length; k++) {
+                  if (cleanStr(row[k])) { lineOpTop = cleanStr(row[k]).toUpperCase(); break; }
+                }
+              }
+            }
+          }
+
+          const headerIdx = findHeaderRowIndex(matrix, ['unit', 'unit nbr', 'container', 'contenedor']);
+          if (headerIdx === -1) {
+            throw new Error(`No se encontró la columna "Unit" en "${file.name}".`);
+          }
+
+          const normHeaders = matrix[headerIdx].map(h => normalizeHeader(h));
+          const findCol = (exactList, partialList = []) => {
+            let idx = normHeaders.findIndex(h => exactList.includes(h));
+            if (idx === -1 && partialList.length) {
+              idx = normHeaders.findIndex(h => partialList.some(p => h.includes(p)));
+            }
+            return idx;
+          };
+
+          const idxUnit = findCol(['unit', 'unit nbr', 'container', 'contenedor']);
+          const idxLine = findCol(['line op', 'line', 'linea']);
+          const idxTemp = findCol(['temp', 'temp required c', 'temp required']);
+          const idxVent = findCol(['vent', 'ventilation']);
+          const idxShipper = findCol(['shipper', 'export', 'exporter']);
+          const idxBooking = findCol(['booking']);
+          const idxCommodity = findCol(['commodity', 'cmdty', 'cmdty dponline']);
+          const idxPol = findCol(['pol']);
+          const idxPod = findCol(['pod']);
+          const idxLoaded = findCol(['loaded', 'load time']);
+          const idxReturn = findCol(['return']);
+          const idxSupply = findCol(['supply']);
+          const idxRemarks = findCol(['remarks', 'remark', 'observaciones']);
+
+          const { vessel: parsedVessel, voyage: parsedVoyage } = parseVesselAndVoyage(rawVesselTop);
+
+          // Construir mapa de contenedores del archivo de línea
+          const lineFileMap = new Map();
+          for (let r = headerIdx + 1; r < matrix.length; r++) {
+            const row = matrix[r] || [];
+            const unit = idxUnit >= 0 ? normalizeUnit(row[idxUnit]) : '';
+            if (!unit || !/^[A-Z]{4}\d{5,7}$/.test(unit)) continue;
+
+            const shipperVal = idxShipper >= 0 ? cleanStr(row[idxShipper]) : '';
+            const bookingVal = idxBooking >= 0 ? cleanStr(row[idxBooking]) : '';
+
+            lineFileMap.set(unit, {
+              lineOp: idxLine >= 0 && cleanStr(row[idxLine]) ? cleanStr(row[idxLine]).toUpperCase() : lineOpTop,
+              tempReq: idxTemp >= 0 ? formatTemp(row[idxTemp]) : '',
+              vent: idxVent >= 0 ? cleanStr(row[idxVent]) : '',
+              exportName: shipperVal || bookingVal,
+              commodity: idxCommodity >= 0 ? cleanStr(row[idxCommodity]) : '',
+              pol: idxPol >= 0 ? cleanStr(row[idxPol]) : '',
+              pod: idxPod >= 0 ? cleanStr(row[idxPod]) : '',
+              loadTime: idxLoaded >= 0 ? formatDateTime(row[idxLoaded]) : '',
+              returnTemp: idxReturn >= 0 ? formatTemp(row[idxReturn]) : '',
+              supplyTemp: idxSupply >= 0 ? formatTemp(row[idxSupply]) : '',
+              remarks: idxRemarks >= 0 ? cleanStr(row[idxRemarks]) : ''
+            });
+          }
+
+          // Cruzar contra las hojas generadas en el Paso 1 y rellenar SOLO los datos vacíos
+          const fillableFields = ['tempReq', 'vent', 'exportName', 'commodity', 'pol', 'pod', 'loadTime', 'returnTemp', 'supplyTemp', 'remarks'];
+
+          Object.keys(appState.sheets).forEach(sheetLineKey => {
+            const sheet = appState.sheets[sheetLineKey];
+            let sheetTouched = false;
+
+            sheet.rows.forEach(row => {
+              const incoming = lineFileMap.get(row.unit);
+              if (!incoming) return;
+
+              // Si tanto el archivo como la hoja especifican línea, validar coincidencia
+              if (incoming.lineOp && sheet.lineOp && incoming.lineOp !== sheet.lineOp) return;
+
+              totalMatchedUnits++;
+              sheetTouched = true;
+
+              fillableFields.forEach(field => {
+                if (isEmptyCell(row[field]) && !isEmptyCell(incoming[field])) {
+                  row[field] = incoming[field];
+                  totalFieldsCompleted++;
+                }
+              });
+
+              // Sincronizar Temp. operativa si estaba vacía
+              if (isEmptyCell(row.tempActual) && !isEmptyCell(row.tempReq)) {
+                row.tempActual = row.tempReq;
+              }
+            });
+
+            // Si esta hoja tuvo coincidencias y el reporte de línea traía Vessel/Voyage más completo, actualizar cabecera
+            if (sheetTouched) {
+              linesUpdatedSet.add(sheetLineKey);
+              if (parsedVessel && (!sheet.vessel || parsedVessel.length > sheet.vessel.length)) {
+                sheet.vessel = parsedVessel;
+              }
+              if (parsedVoyage && isEmptyCell(sheet.voyage)) {
+                sheet.voyage = parsedVoyage;
+              }
+            }
+          });
+
+          totalFilesOk++;
+          logDiagnostic(`Archivo "${file.name}" procesado: ${lineFileMap.size} unidades leídas.`, 'info');
+        } catch (err) {
+          logDiagnostic(`Error en archivo "${file.name}": ${err.message}`, 'error');
+          showStatus(`Error leyendo "${file.name}": ${err.message}`, 'error');
+        }
+      }
+
+      if (totalFilesOk > 0) {
+        const linesArr = Array.from(linesUpdatedSet);
+        if (linesArr.length > 0) {
+          appState.activeLine = linesArr[0];
+        }
+        setBadge('badgeStep2', `Completado (${totalFieldsCompleted} datos llenados)`, 'done');
+        logDiagnostic(`Paso 2 finalizado: ${totalMatchedUnits} contenedores cruzados en líneas [${linesArr.join(', ') || 'ninguna'}], ${totalFieldsCompleted} celdas vacías completadas.`, 'success');
+        showStatus(
+          `<strong>Paso 2 Completado:</strong> Se cruzaron <strong>${totalMatchedUnits} contenedores</strong> en las líneas (${linesArr.join(', ') || 'sin coincidencias'}) y se rellenaron <strong>${totalFieldsCompleted} campos vacíos</strong> sin sobrescribir datos previos.`,
+          totalMatchedUnits > 0 ? 'success' : 'warning'
+        );
+        refreshUI();
+      }
+    }
+
+    /**
+     * =========================================================================
+     * PASO 3: CONSOLIDAR CON ARCHIVO GENERAL (CACHED O NUEVO ARCHIVO)
+     * =========================================================================
+     */
+    function handleStep3NewGeneralUpload(event) {
+      const files = Array.from(event.target.files || []);
+      event.target.value = '';
+      if (!files.length) return;
+      processStep3File(files[0]);
+    }
+
+    async function processStep3File(file) {
+      if (Object.keys(appState.sheets).length === 0) {
+        showStatus('Primero debes crear las hojas por línea en el <strong>Paso 1</strong>.', 'warning');
+        return;
+      }
+
+      logDiagnostic(`Leyendo nuevo Archivo General en Paso 3: "${file.name}"...`);
+      try {
+        const { matrix } = await readExcelAnyFormat(file);
+        const headerIdx = findHeaderRowIndex(matrix, ['unit nbr', 'unit', 'container']);
+        if (headerIdx === -1) {
+          throw new Error('No se encontró la columna "Unit Nbr" o "Unit".');
+        }
+
+        const normHeaders = matrix[headerIdx].map(h => normalizeHeader(h));
+        const findCol = (exactList, partialList = []) => {
+          let idx = normHeaders.findIndex(h => exactList.includes(h));
+          if (idx === -1 && partialList.length) {
+            idx = normHeaders.findIndex(h => partialList.some(p => h.includes(p)));
+          }
+          return idx;
+        };
+
+        const idxUnit = findCol(['unit nbr', 'unit'], ['unit nbr']);
+        const idxLine = findCol(['line op', 'line'], ['line op']);
+        const idxLoaded = findCol(['loaded', 'load time'], ['loaded']);
+        const idxTempReq = findCol(['temp required c', 'temp required', 'temp'], ['temp required']);
+        const idxReturn = findCol(['last temp read c', 'last temp read', 'return'], ['last temp read']);
+        const idxSupply = findCol(['last supply temp c', 'last supply temp', 'supply'], ['last supply temp']);
+        const idxPod = findCol(['pod']);
+        const idxPol = findCol(['pol']);
+        const idxCmdty = findCol(['cmdty dponline', 'commodity', 'cmdty'], ['cmdty']);
+
+        const freshMap = new Map();
+        for (let r = headerIdx + 1; r < matrix.length; r++) {
+          const row = matrix[r] || [];
+          const unit = idxUnit >= 0 ? normalizeUnit(row[idxUnit]) : '';
+          if (!unit || !/^[A-Z]{4}\d{5,7}$/.test(unit)) continue;
+
+          freshMap.set(unit, {
+            unit,
+            lineOp: idxLine >= 0 ? cleanStr(row[idxLine]).toUpperCase() : '',
+            loadTime: idxLoaded >= 0 ? formatDateTime(row[idxLoaded]) : '',
+            tempReq: idxTempReq >= 0 ? formatTemp(row[idxTempReq]) : '',
+            tempActual: idxTempReq >= 0 ? formatTemp(row[idxTempReq]) : '',
+            returnTemp: idxReturn >= 0 ? formatTemp(row[idxReturn]) : '',
+            supplyTemp: idxSupply >= 0 ? formatTemp(row[idxSupply]) : '',
+            pod: idxPod >= 0 ? cleanStr(row[idxPod]) : '',
+            pol: idxPol >= 0 ? cleanStr(row[idxPol]) : '',
+            commodity: idxCmdty >= 0 ? cleanStr(row[idxCmdty]) : ''
+          });
+        }
+
+        appState.generalIndex = freshMap;
+        runStep3WithStoredGeneral();
+      } catch (err) {
+        setBadge('badgeStep3', 'Error al leer', 'warn');
+        logDiagnostic(`Error en Paso 3: ${err.message}`, 'error');
+        showStatus(`Error al procesar archivo en Paso 3: ${err.message}`, 'error');
+      }
+    }
+
+    function runStep3WithStoredGeneral() {
+      const lineKeys = Object.keys(appState.sheets);
+      if (lineKeys.length === 0) {
+        showStatus('No hay hojas de líneas cargadas. Sube primero el archivo en el <strong>Paso 1</strong>.', 'warning');
+        return;
+      }
+
+      if (appState.generalIndex.size === 0) {
+        showStatus('No hay datos del Archivo General en memoria. Sube el archivo general en el Paso 1 o en el botón inferior del Paso 3.', 'warning');
+        return;
+      }
+
+      let unitsChecked = 0;
+      let cellsCompleted = 0;
+      const targetFields = ['loadTime', 'tempReq', 'tempActual', 'returnTemp', 'supplyTemp', 'pod', 'pol', 'commodity'];
+
+      lineKeys.forEach(lineKey => {
+        const sheet = appState.sheets[lineKey];
+        sheet.rows.forEach(row => {
+          const gen = appState.generalIndex.get(row.unit);
+          if (!gen) return;
+          if (gen.lineOp && sheet.lineOp && gen.lineOp !== sheet.lineOp) return;
+
+          unitsChecked++;
+          targetFields.forEach(field => {
+            if (isEmptyCell(row[field]) && !isEmptyCell(gen[field])) {
+              row[field] = gen[field];
+              cellsCompleted++;
+            }
+          });
+        });
+      });
+
+      setBadge('badgeStep3', `Completado (${unitsChecked} unid. verificadas)`, 'done');
+      logDiagnostic(`Paso 3 Consolidación Final completada: ${unitsChecked} contenedores verificados, ${cellsCompleted} celdas adicionales rellenadas.`, 'success');
       showStatus(
-        `<strong>Paso 3 completado:</strong> Se verificaron todas las hojas por línea usando <strong>${appState.generalFileName || 'el Archivo General'}</strong> y se completaron <strong>${result.filledCells} celdas faltantes</strong> (Load Time, Temp., Return, Supply, Commodity).`,
+        `<strong>Paso 3 Completado:</strong> Se consolidaron <strong>${unitsChecked} contenedores</strong> en las ${lineKeys.length} líneas (${cellsCompleted} campos adicionales completados). Ya puedes revisar, imprimir o descargar el Excel.`,
         'success'
       );
       refreshUI();
-    });
-
-    inputStep3.addEventListener('change', async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      if (Object.keys(appState.sheets).length === 0) {
-        showStatus('Primero debes subir el Archivo General en el <strong>Paso 1</strong> para crear las hojas por línea.', 'warning');
-        inputStep3.value = '';
-        return;
-      }
-
-      try {
-        const { matrix } = await readWorkbookMatrix(file);
-        const parsed = parseGeneralExpoWorkbook(matrix, file.name);
-        appState.generalIndex = parsed.generalMap;
-        appState.generalFileName = file.name;
-
-        const result = applyStep3Consolidation(parsed.generalMap);
-        document.getElementById('badgeStep3').textContent = `${result.filledCells} datos completados`;
-        document.getElementById('badgeStep3').className = 'text-xs font-bold text-indigo-700';
-
-        showStatus(
-          `<strong>Paso 3 completado con "${file.name}":</strong> Se actualizaron <strong>${result.updatedUnits} contenedores</strong> (${result.filledCells} celdas completadas) en tus hojas de línea.`,
-          'success'
-        );
-        refreshUI();
-      } catch (err) {
-        console.error(err);
-        showStatus(`Error al procesar el archivo general en el Paso 3: ${err.message}`, 'error');
-      }
-      inputStep3.value = '';
-    });
-
-    function applyStep3Consolidation(generalMap) {
-      let updatedUnits = 0;
-      let filledCells = 0;
-
-      Object.keys(appState.sheets).forEach(lineKey => {
-        const sheet = appState.sheets[lineKey];
-
-        sheet.rows.forEach(row => {
-          const genData = generalMap.get(row.unit);
-          if (!genData) return;
-
-          // Verificar que pertenezca a la misma línea si viene Line Op
-          if (genData.lineOp && sheet.lineOp && genData.lineOp !== sheet.lineOp) {
-            return;
-          }
-
-          let unitTouched = false;
-          const step3Fields = [
-            ['loadTime', genData.loadTime],
-            ['tempActual', genData.tempActual || genData.tempReq],
-            ['tempReq', genData.tempReq],
-            ['returnTemp', genData.returnTemp],
-            ['supplyTemp', genData.supplyTemp],
-            ['commodity', genData.commodity],
-            ['pol', genData.pol],
-            ['pod', genData.pod]
-          ];
-
-          step3Fields.forEach(([fieldKey, genValue]) => {
-            if (isEmptyCell(row[fieldKey]) && !isEmptyCell(genValue)) {
-              row[fieldKey] = genValue;
-              filledCells++;
-              unitTouched = true;
-            }
-          });
-
-          if (unitTouched) updatedUnits++;
-        });
-      });
-
-      return { updatedUnits, filledCells };
-    }
-
-          const lineKey = parsed.lineOp || 'SIN_LINEA';
-
-          // Si ya existía esa línea, fusionamos sin duplicar contenedores
-          if (appState.sheets[lineKey]) {
-            const existingUnits = new Set(appState.sheets[lineKey].rows.map(r => r.unit));
-            parsed.rows.forEach(r => {
-              if (!existingUnits.has(r.unit)) {
-                appState.sheets[lineKey].rows.push(r);
-                totalContainersAdded++;
-              }
-            });
-            if (!appState.sheets[lineKey].vessel && parsed.vessel) appState.sheets[lineKey].vessel = parsed.vessel;
-            if (!appState.sheets[lineKey].voyage && parsed.voyage) appState.sheets[lineKey].voyage = parsed.voyage;
-          } else {
-            appState.sheets[lineKey] = parsed;
-            totalLinesAdded++;
-            totalContainersAdded += parsed.rows.length;
-          }
-
-          appState.activeLine = lineKey;
-        } catch (err) {
-          console.error(err);
-          showStatus(`Error al leer <strong>${file.name}</strong>: ${err.message}`, 'error');
-        }
-      }
-
-      inputStep1.value = '';
-      if (totalContainersAdded > 0) {
-        document.getElementById('badgeStep1').textContent = `${Object.keys(appState.sheets).length} Línea(s) cargada(s)`;
-        document.getElementById('badgeStep1').className = 'text-xs font-bold text-emerald-700';
-        showStatus(`<strong>Paso 1 completado:</strong> Se cargaron ${totalContainersAdded} contenedores divididos por línea naviera (${Object.keys(appState.sheets).join(', ')}).`, 'success');
-        refreshUI();
-      }
-    });
-
-    function parseStep1VoucherMatrix(matrix, fileName) {
-      let rawVessel = '';
-      let lineOp = '';
-      let headerRowIdx = -1;
-
-      // 1. Buscar metadatos superiores (Vessel, Line) y la fila de encabezados de tabla ("Unit")
-      for (let r = 0; r < Math.min(matrix.length, 25); r++) {
-        const row = matrix[r] || [];
-        for (let c = 0; c < row.length; c++) {
-          const cell = cleanStr(row[c]);
-          const lower = cell.toLowerCase();
-
-          if (lower === 'vessel' || lower === 'vessel:') {
-            // Buscar el valor no vacío a la derecha
-            for (let k = c + 1; k < row.length; k++) {
-              if (cleanStr(row[k])) {
-                rawVessel = cleanStr(row[k]);
-                break;
-              }
-            }
-          }
-
-          if (lower === 'line' || lower === 'line op' || lower === 'line:') {
-            for (let k = c + 1; k < row.length; k++) {
-              if (cleanStr(row[k])) {
-                lineOp = cleanStr(row[k]).toUpperCase();
-                break;
-              }
-            }
-          }
-        }
-
-        // Detectar fila de encabezados de contenedores
-        const normalizedRow = row.map(x => cleanStr(x).toLowerCase());
-        if (normalizedRow.includes('unit') || normalizedRow.includes('unit nbr')) {
-          headerRowIdx = r;
-          break;
-        }
-      }
-
-      if (headerRowIdx === -1) return null;
-
-      const headers = matrix[headerRowIdx].map(h => cleanStr(h).toLowerCase());
-      const findCol = (candidates) => headers.findIndex(h => candidates.some(cand => h === cand || h.includes(cand)));
-
-      const idxUnit = findCol(['unit', 'unit nbr', 'container']);
-      const idxTemp = findCol(['temp.', 'temp', 'temp required']);
-      const idxVent = findCol(['vent.', 'vent']);
-      const idxShipper = findCol(['shipper', 'export', 'exporter']);
-      const idxBooking = findCol(['booking']);
-      const idxCommodity = findCol(['commodity', 'cmdty']);
-      const idxPol = findCol(['pol']);
-      const idxPod = findCol(['pod']);
-      const idxLoaded = findCol(['loaded', 'load time']);
-      const idxReturn = findCol(['return']);
-      const idxSupply = findCol(['supply']);
-      const idxRemarks = findCol(['remarks', 'remark']);
-
-      const { vessel, voyage } = parseVesselAndVoyage(rawVessel);
-      const rows = [];
-
-      for (let r = headerRowIdx + 1; r < matrix.length; r++) {
-        const row = matrix[r] || [];
-        const unit = idxUnit >= 0 ? normalizeUnit(row[idxUnit]) : '';
-        // Validar formato básico de contenedor (4 letras + números)
-        if (!unit || !/^[A-Z]{4}\d{5,7}$/.test(unit)) continue;
-
-        const shipperVal = idxShipper >= 0 ? cleanStr(row[idxShipper]) : '';
-        const bookingVal = idxBooking >= 0 ? cleanStr(row[idxBooking]) : '';
-
-        rows.push({
-          unit,
-          tempReq: idxTemp >= 0 ? cleanStr(row[idxTemp]) : '',
-          vent: idxVent >= 0 ? cleanStr(row[idxVent]) : '',
-          exportName: shipperVal || bookingVal,
-          commodity: idxCommodity >= 0 ? cleanStr(row[idxCommodity]) : '',
-          pol: idxPol >= 0 ? cleanStr(row[idxPol]) : '',
-          pod: idxPod >= 0 ? cleanStr(row[idxPod]) : '',
-          loadTime: idxLoaded >= 0 ? formatExcelDateTime(row[idxLoaded]) : '',
-          tempActual: '',
-          returnTemp: idxReturn >= 0 ? cleanStr(row[idxReturn]) : '',
-          supplyTemp: idxSupply >= 0 ? cleanStr(row[idxSupply]) : '',
-          remarks: idxRemarks >= 0 ? cleanStr(row[idxRemarks]) : ''
-        });
-      }
-
-      // Si no vino Line Op explícito, intentar deducirlo del nombre del archivo
-      if (!lineOp) {
-        const matchLine = fileName.toUpperCase().match(/\b(COS|CMA|HLC|MSC|MSK|ONE|YML|EMC|HAP|ZIM)\b/);
-        lineOp = matchLine ? matchLine[1] : 'LINEA_1';
-      }
-
-      return { lineOp, vessel, voyage, rows };
     }
 
     /**
      * =========================================================================
-     * PASO 2: SUBIR EXCEL DE LÍNEA PARA COMPLETAR ÚNICAMENTE CAMPOS VACÍOS
-     * =========================================================================
-     */
-    inputStep2.addEventListener('change', async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      if (Object.keys(appState.sheets).length === 0) {
-        showStatus('Primero debes subir al menos un archivo Voucher en el <strong>Paso 1</strong>.', 'warning');
-        inputStep2.value = '';
-        return;
-      }
-
-      try {
-        const { matrix } = await readWorkbookMatrix(file);
-        const result = applyStep2LineFile(matrix, targetLineStep2.value);
-
-        document.getElementById('badgeStep2').textContent = `${result.filledCells} celdas completadas`;
-        document.getElementById('badgeStep2').className = 'text-xs font-bold text-emerald-700';
-
-        showStatus(
-          `<strong>Paso 2 completado (${result.targetLine}):</strong> Se revisaron ${result.matchedUnits} contenedores de la línea y se rellenaron <strong>${result.filledCells} celdas vacías</strong> (sin sobrescribir datos previos).`,
-          'success'
-        );
-        refreshUI();
-      } catch (err) {
-        console.error(err);
-        showStatus(`Error al procesar el archivo del Paso 2: ${err.message}`, 'error');
-      }
-      inputStep2.value = '';
-    });
-
-    function applyStep2LineFile(matrix, selectedTargetLine) {
-      // Buscar fila de encabezados donde esté Unit / Unit Nbr
-      let headerIdx = -1;
-      for (let r = 0; r < Math.min(matrix.length, 25); r++) {
-        const norm = (matrix[r] || []).map(x => cleanStr(x).toLowerCase());
-        if (norm.includes('unit') || norm.includes('unit nbr') || norm.includes('contenedor')) {
-          headerIdx = r;
-          break;
-        }
-      }
-      if (headerIdx === -1) throw new Error('No se encontró la columna "Unit" en el archivo de línea.');
-
-      const headers = matrix[headerIdx].map(h => cleanStr(h).toLowerCase());
-      const findCol = (cands) => headers.findIndex(h => cands.some(c => h === c || h.includes(c)));
-
-      const idxUnit = findCol(['unit', 'unit nbr', 'contenedor']);
-      const idxLine = findCol(['line op', 'line']);
-      const idxTemp = findCol(['temp.', 'temp', 'temp required']);
-      const idxVent = findCol(['vent.', 'vent']);
-      const idxExport = findCol(['export', 'shipper', 'exporter']);
-      const idxCommodity = findCol(['commodity', 'cmdty']);
-      const idxPol = findCol(['pol']);
-      const idxPod = findCol(['pod']);
-      const idxLoadTime = findCol(['load time', 'loaded']);
-      const idxReturn = findCol(['return']);
-      const idxSupply = findCol(['supply']);
-      const idxRemarks = findCol(['remarks', 'remark']);
-
-      // Mapear filas del archivo 2 por Unit
-      const file2Map = new Map();
-      let detectedLineInFile = '';
-
-      for (let r = headerIdx + 1; r < matrix.length; r++) {
-        const row = matrix[r] || [];
-        const unit = idxUnit >= 0 ? normalizeUnit(row[idxUnit]) : '';
-        if (!unit) continue;
-
-        if (!detectedLineInFile && idxLine >= 0 && cleanStr(row[idxLine])) {
-          detectedLineInFile = cleanStr(row[idxLine]).toUpperCase();
-        }
-
-        file2Map.set(unit, {
-          tempReq: idxTemp >= 0 ? cleanStr(row[idxTemp]) : '',
-          vent: idxVent >= 0 ? cleanStr(row[idxVent]) : '',
-          exportName: idxExport >= 0 ? cleanStr(row[idxExport]) : '',
-          commodity: idxCommodity >= 0 ? cleanStr(row[idxCommodity]) : '',
-          pol: idxPol >= 0 ? cleanStr(row[idxPol]) : '',
-          pod: idxPod >= 0 ? cleanStr(row[idxPod]) : '',
-          loadTime: idxLoadTime >= 0 ? formatExcelDateTime(row[idxLoadTime]) : '',
-          returnTemp: idxReturn >= 0 ? cleanStr(row[idxReturn]) : '',
-          supplyTemp: idxSupply >= 0 ? cleanStr(row[idxSupply]) : '',
-          remarks: idxRemarks >= 0 ? cleanStr(row[idxRemarks]) : ''
-        });
-      }
-
-      // Determinar qué hoja de línea actualizar
-      let targetLine = selectedTargetLine;
-      if (targetLine === 'AUTO') {
-        if (detectedLineInFile && appState.sheets[detectedLineInFile]) {
-          targetLine = detectedLineInFile;
-        } else {
-          // Buscar la línea que tenga mayor coincidencia de contenedores con este archivo
-          let bestLine = appState.activeLine;
-          let maxHits = -1;
-          Object.keys(appState.sheets).forEach(lineKey => {
-            const hits = appState.sheets[lineKey].rows.filter(r => file2Map.has(r.unit)).length;
-            if (hits > maxHits) {
-              maxHits = hits;
-              bestLine = lineKey;
-            }
-          });
-          targetLine = bestLine;
-        }
-      }
-
-      const sheet = appState.sheets[targetLine];
-      if (!sheet) throw new Error('No se encontró la hoja de la línea seleccionada.');
-
-      let matchedUnits = 0;
-      let filledCells = 0;
-
-      // Rellenar ÚNICAMENTE celdas que estén vacías en la hoja de esa línea
-      const fieldsToFill = ['tempReq', 'vent', 'exportName', 'commodity', 'pol', 'pod', 'loadTime', 'returnTemp', 'supplyTemp', 'remarks'];
-
-      sheet.rows.forEach(row => {
-        const incoming = file2Map.get(row.unit);
-        if (!incoming) return;
-        matchedUnits++;
-
-        fieldsToFill.forEach(field => {
-          if (isEmptyCell(row[field]) && !isEmptyCell(incoming[field])) {
-            row[field] = incoming[field];
-            filledCells++;
-          }
-        });
-      });
-
-      appState.activeLine = targetLine;
-      return { targetLine, matchedUnits, filledCells };
-    }
-
-    /**
-     * =========================================================================
-     * PASO 3: SUBIR ARCHIVO GENERAL DE EMBARQUE (N4 EXPO) Y LLENAR SOLO HOJAS CARGADAS
-     * =========================================================================
-     */
-    inputStep3.addEventListener('change', async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      if (Object.keys(appState.sheets).length === 0) {
-        showStatus('Primero debes subir al menos un archivo Voucher en el <strong>Paso 1</strong>.', 'warning');
-        inputStep3.value = '';
-        return;
-      }
-
-      try {
-        const { matrix } = await readWorkbookMatrix(file);
-        const result = applyStep3GeneralExpoFile(matrix, chkFillCommodityStep3.checked);
-
-        document.getElementById('badgeStep3').textContent = `${result.updatedUnits} unid. actualizadas`;
-        document.getElementById('badgeStep3').className = 'text-xs font-bold text-indigo-700';
-
-        showStatus(
-          `<strong>Paso 3 completado:</strong> De los ${result.totalGeneralRows} registros del archivo general, se filtraron y actualizaron <strong>${result.updatedUnits} contenedores</strong> correspondientes únicamente a tus hojas cargadas (${result.linesAffected.join(', ') || 'ninguna coincidencia'}).`,
-          result.updatedUnits > 0 ? 'success' : 'warning'
-        );
-        refreshUI();
-      } catch (err) {
-        console.error(err);
-        showStatus(`Error al procesar el archivo general de embarque: ${err.message}`, 'error');
-      }
-      inputStep3.value = '';
-    });
-
-    function applyStep3GeneralExpoFile(matrix, alsoFillEmptyCommodity) {
-      // Buscar la fila de encabezados donde esté "Unit Nbr"
-      let headerIdx = -1;
-      for (let r = 0; r < Math.min(matrix.length, 20); r++) {
-        const norm = (matrix[r] || []).map(x => cleanStr(x).toLowerCase());
-        if (norm.includes('unit nbr') || norm.includes('unit')) {
-          headerIdx = r;
-          break;
-        }
-      }
-      if (headerIdx === -1) throw new Error('No se encontró la columna "Unit Nbr" en el archivo general.');
-
-      const headers = matrix[headerIdx].map(h => cleanStr(h).toLowerCase());
-      const findExactOrPartial = (exactList, partialList = []) => {
-        let idx = headers.findIndex(h => exactList.includes(h));
-        if (idx === -1 && partialList.length) {
-          idx = headers.findIndex(h => partialList.some(p => h.includes(p)));
-        }
-        return idx;
-      };
-
-      const idxUnit = findExactOrPartial(['unit nbr', 'unit'], ['unit nbr']);
-      const idxLine = findExactOrPartial(['line op', 'line'], ['line op']);
-      const idxLoaded = findExactOrPartial(['loaded', 'load time'], ['loaded']);
-      const idxTempReq = findExactOrPartial(['temp required (c)', 'temp required'], ['temp required']);
-      const idxReturn = findExactOrPartial(['last temp read (c)', 'last temp read'], ['last temp read']);
-      const idxSupply = findExactOrPartial(['last supply temp (c)', 'last supply temp'], ['last supply temp']);
-      const idxCmdty = findExactOrPartial(['cmdty dponline', 'commodity', 'cmdty'], ['cmdty']);
-      const idxPol = findExactOrPartial(['pol']);
-      const idxPod = findExactOrPartial(['pod']);
-
-      // Indexar registros del archivo general por Unit Nbr
-      const generalMap = new Map();
-      let totalGeneralRows = 0;
-
-      for (let r = headerIdx + 1; r < matrix.length; r++) {
-        const row = matrix[r] || [];
-        const unit = idxUnit >= 0 ? normalizeUnit(row[idxUnit]) : '';
-        if (!unit) continue;
-        totalGeneralRows++;
-
-        generalMap.set(unit, {
-          lineOp: idxLine >= 0 ? cleanStr(row[idxLine]).toUpperCase() : '',
-          loaded: idxLoaded >= 0 ? formatExcelDateTime(row[idxLoaded]) : '',
-          tempReq: idxTempReq >= 0 ? formatTempValue(row[idxTempReq]) : '',
-          returnTemp: idxReturn >= 0 ? formatTempValue(row[idxReturn]) : '',
-          supplyTemp: idxSupply >= 0 ? formatTempValue(row[idxSupply]) : '',
-          commodity: idxCmdty >= 0 ? cleanStr(row[idxCmdty]) : '',
-          pol: idxPol >= 0 ? cleanStr(row[idxPol]) : '',
-          pod: idxPod >= 0 ? cleanStr(row[idxPod]) : ''
-        });
-      }
-
-      let updatedUnits = 0;
-      const linesAffected = new Set();
-
-      // Recorrer ÚNICAMENTE las hojas de líneas que el usuario cargó en el Paso 1
-      Object.keys(appState.sheets).forEach(lineKey => {
-        const sheet = appState.sheets[lineKey];
-
-        sheet.rows.forEach(row => {
-          const genData = generalMap.get(row.unit);
-          if (!genData) return;
-
-          // Verificar que si el archivo general trae Line Op, coincida con la hoja de la línea
-          if (genData.lineOp && sheet.lineOp && genData.lineOp !== sheet.lineOp) {
-            return;
-          }
-
-          let rowChanged = false;
-
-          // Rellenar las 4 columnas de monitoreo/embarque de la imagen 2: Load Time | Temp. | Return | Supply
-          if (isEmptyCell(row.loadTime) && !isEmptyCell(genData.loaded)) {
-            row.loadTime = genData.loaded;
-            rowChanged = true;
-          }
-
-          if (isEmptyCell(row.tempActual) && !isEmptyCell(genData.tempReq)) {
-            row.tempActual = genData.tempReq;
-            rowChanged = true;
-          }
-
-          if (isEmptyCell(row.returnTemp) && !isEmptyCell(genData.returnTemp)) {
-            row.returnTemp = genData.returnTemp;
-            rowChanged = true;
-          }
-
-          if (isEmptyCell(row.supplyTemp) && !isEmptyCell(genData.supplyTemp)) {
-            row.supplyTemp = genData.supplyTemp;
-            rowChanged = true;
-          }
-
-          // Opcional: rellenar Commodity o POL si seguían vacíos
-          if (alsoFillEmptyCommodity && isEmptyCell(row.commodity) && !isEmptyCell(genData.commodity)) {
-            row.commodity = genData.commodity;
-            rowChanged = true;
-          }
-
-          if (isEmptyCell(row.pol) && !isEmptyCell(genData.pol)) {
-            row.pol = genData.pol;
-            rowChanged = true;
-          }
-
-          if (rowChanged) {
-            updatedUnits++;
-            linesAffected.add(lineKey);
-          }
-        });
-      });
-
-      return {
-        totalGeneralRows,
-        updatedUnits,
-        linesAffected: Array.from(linesAffected)
-      };
-    }
-
-    /**
-     * =========================================================================
-     * RENDERIZADO DE PESTAÑAS Y PLANTILLA OFICIAL DP WORLD POSORJA
+     * RENDERIZADO DE PESTAÑAS Y HOJAS OFICIALES DP WORLD POSORJA
      * =========================================================================
      */
     function refreshUI() {
       const lineKeys = Object.keys(appState.sheets);
-
-      // Actualizar selector del Paso 2
-      targetLineStep2.innerHTML = '<option value="AUTO">Detectar automáticamente</option>';
-      lineKeys.forEach(key => {
-        const opt = document.createElement('option');
-        opt.value = key;
-        opt.textContent = `Línea ${key} (${appState.sheets[key].rows.length} unid.)`;
-        targetLineStep2.appendChild(opt);
-      });
+      const lineTabsContainer = document.getElementById('lineTabsContainer');
+      const sheetActions = document.getElementById('sheetActions');
+      const emptyState = document.getElementById('emptyState');
+      const sheetsWrapper = document.getElementById('sheetsWrapper');
 
       if (lineKeys.length === 0) {
         emptyState.style.display = 'block';
         sheetActions.style.display = 'none';
-        lineTabsContainer.innerHTML = '<span class="text-xs font-semibold text-slate-400 px-2">Ninguna línea cargada aún. Sube el archivo del Paso 1 o usa "Probar Demo".</span>';
+        lineTabsContainer.innerHTML = '<span class="text-xs font-semibold text-slate-400 px-2">Aún no hay líneas detectadas. Sube el Archivo General en el Paso 1.</span>';
         sheetsWrapper.innerHTML = '';
         return;
       }
@@ -1390,20 +1098,21 @@
         appState.activeLine = lineKeys[0];
       }
 
-      // Renderizar pestañas de líneas navieras
+      // Renderizar pestañas de líneas navieras con conteo
       lineTabsContainer.innerHTML = '';
       lineKeys.forEach(key => {
         const sheet = appState.sheets[key];
         const isActive = key === appState.activeLine;
+
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = isActive
-          ? 'px-3.5 py-2 rounded-lg bg-[#002B5B] text-white font-bold text-xs flex items-center gap-2 shadow-sm transition'
-          : 'px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center gap-2 transition';
+          ? 'px-3.5 py-2 rounded-lg bg-[#002855] text-white font-bold text-xs flex items-center gap-2 shadow-sm transition cursor-pointer'
+          : 'px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center gap-2 transition cursor-pointer';
 
         btn.innerHTML = `
-          <span>Hoja Línea: ${key}</span>
-          <span class="px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-white/20 text-white' : 'bg-slate-300/70 text-slate-700'}">
+          <span>Línea: ${escapeHtml(key)}</span>
+          <span class="px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-white/20 text-white' : 'bg-slate-300/80 text-slate-800'}">
             ${sheet.rows.length}
           </span>
         `;
@@ -1414,11 +1123,11 @@
         lineTabsContainer.appendChild(btn);
       });
 
-      // Renderizar las hojas de voucher
       renderSheets();
     }
 
     function renderSheets() {
+      const sheetsWrapper = document.getElementById('sheetsWrapper');
       sheetsWrapper.innerHTML = '';
       const lineKeys = Object.keys(appState.sheets);
 
@@ -1427,27 +1136,14 @@
         const isActive = key === appState.activeLine;
 
         const sheetDiv = document.createElement('div');
-        // En pantalla mostramos la pestaña activa; al imprimir mostramos según printMode
         sheetDiv.className = `voucher-sheet rounded-sm p-4 sm:p-6 ${isActive ? 'block' : 'hidden'} ${appState.printMode === 'ALL' ? 'print:block' : ''}`;
         sheetDiv.dataset.line = key;
 
-        // Completar filas mínimas hasta 12 para estética idéntica al formato oficial
         const displayRows = [...sheet.rows];
         while (displayRows.length < MIN_PRINT_ROWS) {
           displayRows.push({
-            isPlaceholder: true,
-            unit: '',
-            tempReq: '',
-            vent: '',
-            exportName: '',
-            commodity: '',
-            pol: '',
-            pod: '',
-            loadTime: '',
-            tempActual: '',
-            returnTemp: '',
-            supplyTemp: '',
-            remarks: ''
+            unit: '', tempReq: '', vent: '', exportName: '', commodity: '',
+            pol: '', pod: '', loadTime: '', tempActual: '', returnTemp: '', supplyTemp: '', remarks: ''
           });
         }
 
@@ -1459,9 +1155,8 @@
               <div>
                 <div class="flex items-center gap-1.5">
                   <span class="text-2xl sm:text-3xl font-extrabold tracking-tight dpw-navy-text leading-none">DP WORLD</span>
-                  <!-- Emblema circular DP World -->
                   <svg class="w-6 h-6" viewBox="0 0 36 36" fill="none">
-                    <circle cx="18" cy="18" r="16" fill="#002B5B"/>
+                    <circle cx="18" cy="18" r="16" fill="#002855"/>
                     <path d="M18 2A16 16 0 0 1 34 18H18V2Z" fill="#009FE3"/>
                     <path d="M18 34A16 16 0 0 1 2 18H18V34Z" fill="#E30613"/>
                     <path d="M18 34A16 16 0 0 0 34 18H18V34Z" fill="#009640"/>
@@ -1479,10 +1174,9 @@
                   <div class="text-lg sm:text-xl font-medium dpw-navy-text leading-tight">Voucher</div>
                   <div class="text-lg sm:text-xl font-medium dpw-navy-text leading-tight">Embarque</div>
                 </div>
-                <!-- SVG Grúa Pórtico -->
-                <svg class="w-11 h-11 dpw-navy-text" viewBox="0 0 48 48" fill="none" stroke="#002B5B" stroke-width="2">
+                <svg class="w-11 h-11 dpw-navy-text" viewBox="0 0 48 48" fill="none" stroke="#002855" stroke-width="2">
                   <path d="M8 42h32M12 42V12M22 42V12M12 12h28M12 18h10M12 28h10M12 12l10 6M22 18l-10 10M34 12v10"/>
-                  <rect x="29" y="22" width="10" height="6" fill="#e2e8f0" stroke="#002B5B" stroke-width="1.8"/>
+                  <rect x="29" y="22" width="10" height="6" fill="#e2e8f0" stroke="#002855" stroke-width="1.8"/>
                   <path d="M12 12L6 16h6"/>
                 </svg>
               </div>
@@ -1490,21 +1184,21 @@
             </div>
           </div>
 
-          <!-- TABLA DE METADATOS DE LA NAVE (Vessel, Voyage, Line Op) -->
+          <!-- BLOQUE DE METADATOS (Vessel, Voyage, Line Op) -->
           <div class="mb-5">
             <table class="border-collapse border border-slate-900 text-xs w-full max-w-[340px]">
               <tbody>
                 <tr>
                   <td class="dpw-navy font-semibold px-2.5 py-1.5 border border-slate-900 w-28 text-left">Vessel</td>
-                  <td contenteditable="true" data-meta="vessel" data-line="${key}" class="editable-cell px-2.5 py-1.5 border border-slate-900 font-semibold text-slate-900 bg-white">${escapeHtml(sheet.vessel)}</td>
+                  <td contenteditable="true" data-meta="vessel" data-line="${escapeHtml(key)}" class="editable-cell px-2.5 py-1.5 border border-slate-900 font-semibold text-slate-900 bg-white">${escapeHtml(sheet.vessel)}</td>
                 </tr>
                 <tr>
                   <td class="dpw-navy font-semibold px-2.5 py-1.5 border border-slate-900 w-28 text-left">Voyage</td>
-                  <td contenteditable="true" data-meta="voyage" data-line="${key}" class="editable-cell px-2.5 py-1.5 border border-slate-900 font-semibold text-slate-900 bg-white">${escapeHtml(sheet.voyage)}</td>
+                  <td contenteditable="true" data-meta="voyage" data-line="${escapeHtml(key)}" class="editable-cell px-2.5 py-1.5 border border-slate-900 font-semibold text-slate-900 bg-white">${escapeHtml(sheet.voyage)}</td>
                 </tr>
                 <tr>
                   <td class="dpw-navy font-semibold px-2.5 py-1.5 border border-slate-900 w-28 text-left">Line Op</td>
-                  <td contenteditable="true" data-meta="lineOp" data-line="${key}" class="editable-cell px-2.5 py-1.5 border border-slate-900 font-bold text-[#002B5B] bg-white">${escapeHtml(sheet.lineOp)}</td>
+                  <td contenteditable="true" data-meta="lineOp" data-line="${escapeHtml(key)}" class="editable-cell px-2.5 py-1.5 border border-slate-900 font-bold text-[#002855] bg-white">${escapeHtml(sheet.lineOp)}</td>
                 </tr>
               </tbody>
             </table>
@@ -1534,18 +1228,18 @@
                 ${displayRows.map((row, idx) => `
                   <tr>
                     <td class="cell-num">${idx + 1}</td>
-                    <td contenteditable="true" data-line="${key}" data-idx="${idx}" data-field="unit" class="cell-dotted editable-cell font-semibold">${escapeHtml(row.unit)}</td>
-                    <td contenteditable="true" data-line="${key}" data-idx="${idx}" data-field="tempReq" class="cell-dotted editable-cell">${escapeHtml(row.tempReq)}</td>
-                    <td contenteditable="true" data-line="${key}" data-idx="${idx}" data-field="vent" class="cell-dotted editable-cell">${escapeHtml(row.vent)}</td>
-                    <td contenteditable="true" data-line="${key}" data-idx="${idx}" data-field="exportName" class="cell-dotted editable-cell leading-tight">${escapeHtml(row.exportName)}</td>
-                    <td contenteditable="true" data-line="${key}" data-idx="${idx}" data-field="commodity" class="cell-dotted editable-cell leading-tight">${escapeHtml(row.commodity)}</td>
-                    <td contenteditable="true" data-line="${key}" data-idx="${idx}" data-field="pol" class="cell-dotted editable-cell">${escapeHtml(row.pol)}</td>
-                    <td contenteditable="true" data-line="${key}" data-idx="${idx}" data-field="pod" class="cell-dotted editable-cell">${escapeHtml(row.pod)}</td>
-                    <td contenteditable="true" data-line="${key}" data-idx="${idx}" data-field="loadTime" class="cell-dotted editable-cell text-[10px]">${escapeHtml(row.loadTime)}</td>
-                    <td contenteditable="true" data-line="${key}" data-idx="${idx}" data-field="tempActual" class="cell-solid editable-cell">${escapeHtml(row.tempActual)}</td>
-                    <td contenteditable="true" data-line="${key}" data-idx="${idx}" data-field="returnTemp" class="cell-solid editable-cell">${escapeHtml(row.returnTemp)}</td>
-                    <td contenteditable="true" data-line="${key}" data-idx="${idx}" data-field="supplyTemp" class="cell-solid editable-cell">${escapeHtml(row.supplyTemp)}</td>
-                    <td contenteditable="true" data-line="${key}" data-idx="${idx}" data-field="remarks" class="cell-solid editable-cell font-semibold">${escapeHtml(row.remarks)}</td>
+                    <td contenteditable="true" data-line="${escapeHtml(key)}" data-idx="${idx}" data-field="unit" class="cell-dotted editable-cell font-semibold">${escapeHtml(row.unit)}</td>
+                    <td contenteditable="true" data-line="${escapeHtml(key)}" data-idx="${idx}" data-field="tempReq" class="cell-dotted editable-cell">${escapeHtml(row.tempReq)}</td>
+                    <td contenteditable="true" data-line="${escapeHtml(key)}" data-idx="${idx}" data-field="vent" class="cell-dotted editable-cell">${escapeHtml(row.vent)}</td>
+                    <td contenteditable="true" data-line="${escapeHtml(key)}" data-idx="${idx}" data-field="exportName" class="cell-dotted editable-cell leading-tight">${escapeHtml(row.exportName)}</td>
+                    <td contenteditable="true" data-line="${escapeHtml(key)}" data-idx="${idx}" data-field="commodity" class="cell-dotted editable-cell leading-tight">${escapeHtml(row.commodity)}</td>
+                    <td contenteditable="true" data-line="${escapeHtml(key)}" data-idx="${idx}" data-field="pol" class="cell-dotted editable-cell">${escapeHtml(row.pol)}</td>
+                    <td contenteditable="true" data-line="${escapeHtml(key)}" data-idx="${idx}" data-field="pod" class="cell-dotted editable-cell">${escapeHtml(row.pod)}</td>
+                    <td contenteditable="true" data-line="${escapeHtml(key)}" data-idx="${idx}" data-field="loadTime" class="cell-dotted editable-cell text-[10px]">${escapeHtml(row.loadTime)}</td>
+                    <td contenteditable="true" data-line="${escapeHtml(key)}" data-idx="${idx}" data-field="tempActual" class="cell-solid editable-cell">${escapeHtml(row.tempActual)}</td>
+                    <td contenteditable="true" data-line="${escapeHtml(key)}" data-idx="${idx}" data-field="returnTemp" class="cell-solid editable-cell">${escapeHtml(row.returnTemp)}</td>
+                    <td contenteditable="true" data-line="${escapeHtml(key)}" data-idx="${idx}" data-field="supplyTemp" class="cell-solid editable-cell">${escapeHtml(row.supplyTemp)}</td>
+                    <td contenteditable="true" data-line="${escapeHtml(key)}" data-idx="${idx}" data-field="remarks" class="cell-solid editable-cell font-semibold">${escapeHtml(row.remarks)}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -1568,9 +1262,6 @@
         .replace(/"/g, '&quot;');
     }
 
-    /**
-     * Sincroniza ediciones manuales realizadas directamente sobre las celdas de la vista previa
-     */
     function attachCellEditListeners() {
       document.querySelectorAll('[data-field]').forEach(cell => {
         cell.addEventListener('blur', (e) => {
@@ -1582,7 +1273,6 @@
           const sheet = appState.sheets[line];
           if (!sheet) return;
 
-          // Si editó una fila vacía de relleno, la convertimos en fila real
           while (sheet.rows.length <= idx) {
             sheet.rows.push({
               unit: '', tempReq: '', vent: '', exportName: '', commodity: '',
@@ -1608,10 +1298,10 @@
 
     /**
      * =========================================================================
-     * BOTONES DE ACCIÓN: AGREGAR FILA, IMPRIMIR Y EXPORTAR A EXCEL (.XLSX)
+     * ACCIONES: AGREGAR FILA, IMPRIMIR, REINICIAR, EXPORTAR A EXCEL (.XLSX)
      * =========================================================================
      */
-    document.getElementById('btnAddRow').addEventListener('click', () => {
+    function addEmptyRowToActiveSheet() {
       const sheet = appState.sheets[appState.activeLine];
       if (!sheet) return;
       sheet.rows.push({
@@ -1619,101 +1309,43 @@
         pol: '', pod: '', loadTime: '', tempActual: '', returnTemp: '', supplyTemp: '', remarks: ''
       });
       refreshUI();
-    });
+    }
 
-    document.getElementById('btnPrintCurrent').addEventListener('click', () => {
+    function printSingleSheet() {
       appState.printMode = 'SINGLE';
       renderSheets();
       window.print();
-    });
+    }
 
-    document.getElementById('btnPrintAll').addEventListener('click', () => {
+    function printAllSheets() {
       appState.printMode = 'ALL';
       renderSheets();
       window.print();
-    });
+    }
 
-    document.getElementById('btnReset').addEventListener('click', () => {
+    function resetAllData() {
       appState.sheets = {};
-      appState.generalIndex = null;
-      appState.generalFileName = '';
+      appState.generalIndex = new Map();
+      appState.generalMeta = { vessel: '', voyage: '', fileName: '' };
       appState.activeLine = null;
-      btnSyncStep3.disabled = true;
-      document.getElementById('badgeStep1').textContent = 'Pendiente';
-      document.getElementById('badgeStep1').className = 'text-xs font-semibold text-slate-400';
-      document.getElementById('badgeStep2').textContent = 'Pendiente';
-      document.getElementById('badgeStep2').className = 'text-xs font-semibold text-slate-400';
-      document.getElementById('badgeStep3').textContent = 'Listo para sincronizar';
-      document.getElementById('badgeStep3').className = 'text-xs font-semibold text-slate-400';
+      setBadge('badgeStep1', 'Pendiente', 'warn');
+      setBadge('badgeStep2', 'Pendiente', 'default');
+      setBadge('badgeStep3', 'Pendiente', 'default');
       hideStatus();
+      logDiagnostic('Todos los datos han sido reiniciados.', 'info');
       refreshUI();
-    });
+    }
 
-    /**
-     * Exportación a Excel (.xlsx) con una hoja por cada Line Op y estilos corporativos DP World
-     */
-    document.getElementById('btnExportExcel').addEventListener('click', () => {
+    function exportWorkbookToExcel() {
       const lineKeys = Object.keys(appState.sheets);
       if (!lineKeys.length) return;
 
+      if (typeof window.XLSX === 'undefined') {
+        showStatus('La librería XLSX no está cargada para exportar.', 'error');
+        return;
+      }
+
       const wb = XLSX.utils.book_new();
-
-      const navyHeaderStyle = {
-        fill: { fgColor: { rgb: '002B5B' } },
-        font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
-        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-        border: {
-          top: { style: 'thin', color: { rgb: '000000' } },
-          bottom: { style: 'thin', color: { rgb: '000000' } },
-          left: { style: 'thin', color: { rgb: '000000' } },
-          right: { style: 'thin', color: { rgb: '000000' } }
-        }
-      };
-
-      const metaLabelStyle = {
-        fill: { fgColor: { rgb: '002B5B' } },
-        font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
-        alignment: { horizontal: 'left', vertical: 'center' },
-        border: {
-          top: { style: 'thin', color: { rgb: '000000' } },
-          bottom: { style: 'thin', color: { rgb: '000000' } },
-          left: { style: 'thin', color: { rgb: '000000' } },
-          right: { style: 'thin', color: { rgb: '000000' } }
-        }
-      };
-
-      const metaValueStyle = {
-        font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '000000' } },
-        alignment: { horizontal: 'left', vertical: 'center' },
-        border: {
-          top: { style: 'thin', color: { rgb: '000000' } },
-          bottom: { style: 'thin', color: { rgb: '000000' } },
-          left: { style: 'thin', color: { rgb: '000000' } },
-          right: { style: 'thin', color: { rgb: '000000' } }
-        }
-      };
-
-      const dottedCellStyle = {
-        font: { name: 'Calibri', sz: 10, color: { rgb: '000000' } },
-        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-        border: {
-          top: { style: 'dotted', color: { rgb: '808080' } },
-          bottom: { style: 'dotted', color: { rgb: '808080' } },
-          left: { style: 'dotted', color: { rgb: '808080' } },
-          right: { style: 'dotted', color: { rgb: '808080' } }
-        }
-      };
-
-      const solidCellStyle = {
-        font: { name: 'Calibri', sz: 10, color: { rgb: '000000' } },
-        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-        border: {
-          top: { style: 'thin', color: { rgb: '000000' } },
-          bottom: { style: 'thin', color: { rgb: '000000' } },
-          left: { style: 'thin', color: { rgb: '000000' } },
-          right: { style: 'thin', color: { rgb: '000000' } }
-        }
-      };
 
       lineKeys.forEach(key => {
         const sheet = appState.sheets[key];
@@ -1755,7 +1387,6 @@
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-        // Combinar celdas de cabecera y metadatos
         ws['!merges'] = [
           { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
           { s: { r: 0, c: 11 }, e: { r: 0, c: 12 } },
@@ -1764,51 +1395,6 @@
           { s: { r: 4, c: 1 }, e: { r: 4, c: 3 } }
         ];
 
-        // Aplicar estilos a cabecera superior
-        if (ws['A1']) {
-          ws['A1'].s = { font: { name: 'Calibri', sz: 16, bold: true, color: { rgb: '002B5B' } } };
-        }
-        if (ws['L1']) {
-          ws['L1'].s = { font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: '002B5B' } }, alignment: { horizontal: 'right' } };
-        }
-
-        // Estilos a caja Vessel / Voyage / Line Op
-        [2, 3, 4].forEach(r => {
-          const cellA = XLSX.utils.encode_cell({ r, c: 0 });
-          if (ws[cellA]) ws[cellA].s = metaLabelStyle;
-          for (let c = 1; c <= 3; c++) {
-            const cellVal = XLSX.utils.encode_cell({ r, c });
-            if (!ws[cellVal]) ws[cellVal] = { t: 's', v: '' };
-            ws[cellVal].s = metaValueStyle;
-          }
-        });
-
-        // Estilos a encabezados de tabla (fila índice 6)
-        for (let c = 0; c < 13; c++) {
-          const ref = XLSX.utils.encode_cell({ r: 6, c });
-          if (ws[ref]) ws[ref].s = navyHeaderStyle;
-        }
-
-        // Estilos a filas de contenedores
-        for (let r = 7; r < 7 + exportRows.length; r++) {
-          for (let c = 0; c < 13; c++) {
-            const ref = XLSX.utils.encode_cell({ r, c });
-            if (!ws[ref]) ws[ref] = { t: 's', v: '' };
-            if (c === 0) {
-              ws[ref].s = {
-                ...solidCellStyle,
-                font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '002B5B' } },
-                fill: { fgColor: { rgb: 'F8FAFC' } }
-              };
-            } else if (c >= 9) {
-              ws[ref].s = solidCellStyle;
-            } else {
-              ws[ref].s = dottedCellStyle;
-            }
-          }
-        }
-
-        // Anchos de columna optimizados para impresión horizontal
         ws['!cols'] = [
           { wch: 5 },  // N°
           { wch: 15 }, // Unit
@@ -1825,7 +1411,6 @@
           { wch: 11 }  // Remarks
         ];
 
-        // Configurar página horizontal (Landscape)
         ws['!pageSetup'] = { orientation: 'landscape', paperSize: 9, fitToWidth: 1, fitToHeight: 1 };
 
         const safeSheetName = (sheet.lineOp || key).substring(0, 31).replace(/[\\/?*[\]]/g, '_');
@@ -1835,16 +1420,19 @@
       const firstSheet = appState.sheets[lineKeys[0]];
       const fileVessel = (firstSheet.vessel || 'NAVE').replace(/\s+/g, '_');
       const fileVoyage = (firstSheet.voyage || 'VIAJE').replace(/\s+/g, '_');
-      XLSX.writeFile(wb, `Voucher_Embarque_${fileVessel}_${fileVoyage}.xlsx`);
-      showStatus('Archivo Excel generado y descargado con una hoja independiente por cada línea.', 'success');
-    });
+      const outName = `Voucher_Embarque_${fileVessel}_${fileVoyage}.xlsx`;
+
+      XLSX.writeFile(wb, outName);
+      logDiagnostic(`Excel exportado correctamente: ${outName} (${lineKeys.length} hojas).`, 'success');
+      showStatus(`Excel descargado: <strong>${outName}</strong> con ${lineKeys.length} hojas separadas por línea.`, 'success');
+    }
 
     /**
      * =========================================================================
-     * MODO DEMOSTRACIÓN CON MÚLTIPLES LÍNEAS DETECTADAS DESDE EL ARCHIVO GENERAL
+     * MODO DEMOSTRACIÓN CON DATOS REALES (COS Y CMA)
      * =========================================================================
      */
-    document.getElementById('btnDemo').addEventListener('click', () => {
+    function loadDemoData() {
       appState.sheets = {
         COS: {
           lineOp: 'COS',
@@ -1853,10 +1441,7 @@
           rows: [
             { unit: 'DFOU6158707', tempReq: '-20.0 c', vent: '', exportName: 'COSCO SHIPPING LINES ECUADOR CIA. LTDA.', commodity: 'SHRIMP FROZEN', pol: 'ECPSJ', pod: 'KRPUS', loadTime: '06/05/2026 07:14', tempActual: '-20.0 c', returnTemp: '-19.8 c', supplyTemp: '-20.2 c', remarks: 'OK' },
             { unit: 'FBIU5335221', tempReq: '-25.0 c', vent: '', exportName: 'PROMARISCO S.A.', commodity: 'SHRIMP FROZEN', pol: 'ECPSJ', pod: 'KRPUS', loadTime: '06/05/2026 07:22', tempActual: '-25.0 c', returnTemp: '-24.7 c', supplyTemp: '-25.1 c', remarks: 'OK' },
-            { unit: 'FBIU5345467', tempReq: '-25.0 c', vent: '', exportName: 'CORPORACION CONSERVERA MUNDO MARINO PENINSULAR', commodity: 'FROZEN TUNA', pol: 'ECPSJ', pod: 'KRPUS', loadTime: '06/05/2026 07:35', tempActual: '-25.0 c', returnTemp: '-24.9 c', supplyTemp: '-25.2 c', remarks: 'OK' },
-            { unit: 'FBIU5661819', tempReq: '-25.0 c', vent: '', exportName: 'PROMARISCO S.A.', commodity: 'SHRIMP FROZEN', pol: 'ECPSJ', pod: 'KRPUS', loadTime: '06/05/2026 07:41', tempActual: '-25.0 c', returnTemp: '-24.6 c', supplyTemp: '-25.0 c', remarks: 'OK' },
-            { unit: 'FBIU5678370', tempReq: '-25.0 c', vent: '', exportName: 'PROMARISCO S.A.', commodity: 'SHRIMP FROZEN', pol: 'ECPSJ', pod: 'KRPUS', loadTime: '06/05/2026 07:49', tempActual: '-25.0 c', returnTemp: '-24.8 c', supplyTemp: '-25.1 c', remarks: 'OK' },
-            { unit: 'FBIU5692445', tempReq: '-25.0 c', vent: '', exportName: 'PROMARISCO S.A.', commodity: 'SHRIMP FROZEN', pol: 'ECPSJ', pod: 'KRPUS', loadTime: '06/05/2026 07:55', tempActual: '-25.0 c', returnTemp: '-24.7 c', supplyTemp: '-25.1 c', remarks: 'OK' }
+            { unit: 'FBIU5345467', tempReq: '-25.0 c', vent: '', exportName: 'CORPORACION CONSERVERA MUNDO MARINO PENINSULAR', commodity: 'FROZEN TUNA', pol: 'ECPSJ', pod: 'KRPUS', loadTime: '06/05/2026 07:35', tempActual: '-25.0 c', returnTemp: '-24.9 c', supplyTemp: '-25.2 c', remarks: 'OK' }
           ]
         },
         CMA: {
@@ -1864,18 +1449,20 @@
           vessel: 'CMA CGM COPPER',
           voyage: '0MH34W1MA',
           rows: [
-            { unit: 'CMAU5412890', tempReq: '13.5 c', vent: '25 CBM/H', exportName: 'REYBANPAC REY BANANO DEL PACIFICO C.L.', commodity: 'FRESH BANANAS', pol: 'ECPSJ', pod: 'NLRTM', loadTime: '06/05/2026 08:10', tempActual: '13.5 c', returnTemp: '13.6 c', supplyTemp: '13.4 c', remarks: 'OK' },
-            { unit: 'CGMU5198234', tempReq: '-20.0 c', vent: '', exportName: 'SANTA PRISCILA S.A.', commodity: 'SHRIMP FROZEN', pol: 'ECPSJ', pod: 'USMIA', loadTime: '06/05/2026 08:24', tempActual: '-20.0 c', returnTemp: '-19.9 c', supplyTemp: '-20.1 c', remarks: 'OK' }
+            { unit: 'CMAU4829102', tempReq: '13.5 c', vent: '25 CMH', exportName: 'EXPORTADORA BANANERA NOBOA', commodity: 'BANANAS FRESH', pol: 'ECPSJ', pod: 'NLRTM', loadTime: '06/05/2026 08:10', tempActual: '13.5 c', returnTemp: '13.7 c', supplyTemp: '13.4 c', remarks: 'OK' },
+            { unit: 'CGMU5192834', tempReq: '-18.0 c', vent: '', exportName: 'SANTA PRISCILA S.A.', commodity: 'SHRIMP FROZEN', pol: 'ECPSJ', pod: 'BEANR', loadTime: '06/05/2026 08:25', tempActual: '-18.0 c', returnTemp: '-17.9 c', supplyTemp: '-18.1 c', remarks: 'OK' }
           ]
         }
       };
+
       appState.activeLine = 'COS';
-      btnSyncStep3.disabled = false;
-      document.getElementById('badgeStep1').textContent = '2 Líneas detectadas (COS, CMA)';
-      document.getElementById('badgeStep1').className = 'text-xs font-bold text-emerald-700';
-      showStatus('<strong>Vista previa de demostración cargada:</strong> Se simularon 2 líneas separadas (<strong>COS</strong> y <strong>CMA</strong>). Cambia entre las pestañas de abajo o sube tus archivos reales siguiendo los Pasos 1, 2 y 3.', 'info');
+      setBadge('badgeStep1', 'Demo (2 líneas / 5 unid.)', 'done');
+      setBadge('badgeStep2', 'Completado (Demo)', 'done');
+      setBadge('badgeStep3', 'Completado (Demo)', 'done');
+      logDiagnostic('Datos de demostración cargados: Líneas COS y CMA.', 'success');
+      showStatus('<strong>Demo cargada:</strong> Se generaron 2 hojas independientes (<strong>COS</strong> y <strong>CMA</strong>). Cambia entre pestañas o sube tus archivos reales en los Pasos 1, 2 y 3.', 'info');
       refreshUI();
-    });
+    }
   </script>
 </body>
 </html>
