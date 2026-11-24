@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voucher Embarque - DP World Posorja</title>
+  <!-- Carga Multi-CDN de SheetJS con respaldo -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script>
+    if (typeof XLSX === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');
+    }
+  </script>
+  <script>
+    if (typeof XLSX === 'undefined') {
+      document.write('<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"><\/script>');
+    }
+  </script>
+  <style>
+    :root {
+      --dp-navy: #00205b;
+      --dp-navy-dark: #00153d;
+      --dp-blue: #005eb8;
+      --dp-red: #e4002b;
+      --dp-teal: #00a99d;
+      --dp-bg: #f1f5f9;
+      --dp-card: #ffffff;
+      --dp-border: #cbd5e1;
+      --cell-pad-v: 4px;
+      --cell-pad-h: 4px;
+      --table-font: 11px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--dp-bg);
+      color: #0f172a;
+    }
+
+    /* Barra superior */
+    .topbar {
+      background: linear-gradient(90deg, var(--dp-navy-dark), var(--dp-navy));
+      color: #fff;
+      padding: 12px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      background: #fff;
+      color: var(--dp-navy);
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      letter-spacing: 0.4px;
+    }
+
+    .brand-badge span {
+      color: var(--dp-red);
+    }
+
+    .topbar-title h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .topbar-title p {
+      margin: 2px 0 0;
+      font-size: 11px;
+      color: #cbd5e1;
+    }
+
+    .topbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 6px;
+      padding: 8px 13px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--dp-blue);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #004c96;
+    }
+
+    .btn-success {
+      background: #0f766e;
+      color: #fff;
+    }
+    .btn-success:hover:not(:disabled) {
+      background: #115e59;
+    }
+
+    .btn-warning {
+      background: #d97706;
+      color: #fff;
+    }
+    .btn-warning:hover:not(:disabled) {
+      background: #b45309;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: #fff;
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: #b91c1c;
+    }
+
+    .btn-light {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .btn-light:hover:not(:disabled) {
+      background: #cbd5e1;
+    }
+
+    select.density-select {
+      padding: 7px 10px;
+      border-radius: 6px;
+      border: 1px solid #94a3b8;
+      font-size: 12px;
+      font-weight: 600;
+      background: #fff;
+      color: #0f172a;
+      cursor: pointer;
+    }
+
+    /* Contenedor principal */
+    .container {
+      max-width: 1440px;
+      margin: 16px auto;
+      padding: 0 16px 40px;
+    }
+
+    /* Tarjetas de los 3 pasos */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .step-card {
+      background: var(--dp-card);
+      border: 1px solid var(--dp-border);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .step-badge {
+      background: var(--dp-navy);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .step-status {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .step-status.done {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .step-card h3 {
+      margin: 6px 0 4px;
+      font-size: 14px;
+      color: var(--dp-navy);
+    }
+
+    .step-card p {
+      margin: 0;
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.4;
+    }
+
+    .file-drop {
+      border: 1.5px dashed #94a3b8;
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+      background: #f8fafc;
+      cursor: pointer;
+      font-size: 12px;
+      color: #334155;
+      transition: all 0.15s ease;
+    }
+
+    .file-drop:hover {
+      border-color: var(--dp-blue);
+      background: #eff6ff;
+    }
+
+    .file-drop input[type="file"] {
+      display: none;
+    }
+
+    .step-options {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 11.5px;
+      color: #334155;
+    }
+
+    .step-options label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    /* Consola de Diagnóstico */
+    .log-panel {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 11.5px;
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    .log-body {
+      max-height: 105px;
+      overflow-y: auto;
+      line-height: 1.45;
+    }
+
+    .log-ok { color: #4ade80; }
+    .log-warn { color: #fbbf24; }
+    .log-err { color: #f87171; }
+    .log-info { color: #38bdf8; }
+
+    /* Pestañas de líneas */
+    .tabs-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--dp-border);
+    }
+
+    .tabs-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tab-btn {
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #1e293b;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab-btn.active {
+      background: var(--dp-navy);
+      color: #fff;
+      border-color: var(--dp-navy);
+    }
+
+    .tab-count {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 11px;
+    }
+
+    .tab-btn:not(.active) .tab-count {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .kbd-hint {
+      font-size: 11px;
+      color: #475569;
+    }
+
+    /* Hoja Voucher */
+    .voucher-sheet {
+      background: #fff;
+      border: 2px solid var(--dp-navy);
+      padding: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .voucher-sheet.hidden-screen {
+      display: none;
+    }
+
+    .voucher-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .dp-logo-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dp-logo-text {
+      line-height: 1;
+    }
+
+    .dp-logo-main {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--dp-navy);
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dp-globe {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: conic-gradient(from 45deg, var(--dp-red) 0deg 120deg, var(--dp-teal) 120deg 240deg, var(--dp-blue) 240deg 360deg);
+      display: inline-block;
+    }
+
+    .dp-logo-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dp-red);
+      margin-top: 2px;
+    }
+
+    .voucher-title-box {
+      text-align: right;
+      min-width: 175px;
+    }
+
+    .voucher-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .voucher-title-words {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--dp-navy);
+      line-height: 1.15;
+    }
+
+    .crane-icon {
+      width: 34px;
+      height: 34px;
+      stroke: var(--dp-navy);
+    }
+
+    .voucher-title-bar {
+      height: 12px;
+      background: var(--dp-navy);
+      margin-top: 5px;
+      width: 100%;
+    }
+
+    /* Bloque Vessel / Voyage / Line Op */
+    .meta-table {
+      border-collapse: collapse;
+      margin-bottom: 12px;
+      width: 290px;
+    }
+
+    .meta-table td {
+      border: 1.5px solid #000;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .meta-label {
+      background: var(--dp-navy);
+      color: #fff;
+      font-weight: 700;
+      width: 95px;
+    }
+
+    .meta-val {
+      background: #fff;
+      color: #000;
+      font-weight: 700;
+      text-align: center;
+      cursor: cell;
+    }
+
+    /* Tabla Principal de Contenedores */
+    .voucher-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: var(--table-font);
+    }
+
+    .voucher-table thead {
+      display: table-header-group;
+    }
+
+    .voucher-table th {
+      background: var(--dp-navy);
+      color: #fff;
+      font-weight: 700;
+      text-align: center;
+      padding: 6px 3px;
+      border: 1px solid #000;
+      line-height: 1.2;
+      word-wrap: break-word;
+    }
+
+    .voucher-table td {
+      border-top: 1px solid #94a3b8;
+      border-bottom: 1px solid #94a3b8;
+      border-left: 1px dotted #94a3b8;
+      border-right: 1px dotted #94a3b8;
+      padding: var(--cell-pad-v) var(--cell-pad-h);
+      text-align: center;
+      vertical-align: middle;
+      color: #000;
+      line-height: 1.25;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      cursor: cell;
+      user-select: none;
+    }
+
+    /* Últimas 4 columnas con bordes sólidos como en el formato oficial */
+    .voucher-table td.solid-col {
+      border-left: 1px solid #000;
+      border-right: 1px solid #000;
+      border-top: 1px solid #000;
+      border-bottom: 1px solid #000;
+    }
+
+    .voucher-table td.col-num {
+      color: var(--dp-navy);
+      font-weight: 600;
+      border-left: 1px solid #000;
+      border-right: 1px solid #000;
+    }
+
+    .voucher-table td.col-unit {
+      font-weight: 700;
+    }
+
+    .voucher-table td.col-export,
+    .voucher-table td.col-commodity {
+      font-size: calc(var(--table-font) - 0.8px);
+    }
+
+    /* Anchos exactos de las 13 columnas */
+    col.w-num       { width: 3.2%; }
+    col.w-unit      { width: 9.8%; }
+    col.w-temp1     { width: 5.5%; }
+    col.w-vent      { width: 5.2%; }
+    col.w-export    { width: 22.5%; }
+    col.w-commodity { width: 13.5%; }
+    col.w-pol       { width: 4.5%; }
+    col.w-pod       { width: 5.2%; }
+    col.w-loadtime  { width: 8.6%; }
+    col.w-temp2     { width: 5.5%; }
+    col.w-return    { width: 5.2%; }
+    col.w-supply    { width: 5.2%; }
+    col.w-remarks   { width: 6.1%; }
+
+    .voucher-table th.th-remarks,
+    .voucher-table td.col-remarks {
+      white-space: nowrap;
+      font-weight: 700;
+    }
+
+    /* Selección y edición tipo Excel */
+    .voucher-table td.cell-selected,
+    .meta-val.cell-selected {
+      outline: 2px solid #005eb8 !important;
+      outline-offset: -2px;
+      background-color: #dbeafe !important;
+    }
+
+    .voucher-table td.cell-editing,
+    .meta-val.cell-editing {
+      outline: 2px solid #0f766e !important;
+      outline-offset: -2px;
+      background-color: #fff !important;
+      user-select: text;
+      cursor: text;
+    }
+
+    .empty-state {
+      background: #fff;
+      border: 1.5px dashed #94a3b8;
+      border-radius: 8px;
+      padding: 40px 20px;
+      text-align: center;
+      color: #475569;
+    }
+
+    /* Densidades */
+    body.density-compact {
+      --cell-pad-v: 2.5px;
+      --cell-pad-h: 3px;
+      --table-font: 9.5px;
+    }
+    body.density-normal {
+      --cell-pad-v: 4px;
+      --cell-pad-h: 4px;
+      --table-font: 10.5px;
+    }
+    body.density-expanded {
+      --cell-pad-v: 6px;
+      --cell-pad-h: 5px;
+      --table-font: 11.5px;
+    }
+
+    /* Configuración de Impresión Vertical (Portrait) */
+    @media print {
+      @page {
+        size: portrait;
+        margin: 12mm 6mm 8mm 6mm;
+      }
+
+      body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      .container {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .voucher-sheet {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        page-break-after: always;
+        break-after: page;
+      }
+
+      .voucher-sheet:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+
+      body.print-single-mode .voucher-sheet.hidden-screen {
+        display: none !important;
+      }
+
+      body.print-all-mode .voucher-sheet.hidden-screen {
+        display: block !important;
+      }
+
+      .voucher-table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+      }
+
+      .voucher-table thead {
+        display: table-header-group !important;
+      }
+
+      .voucher-table thead th {
+        padding: 6px 3px !important;
+        border-top: 1px solid #000 !important;
+        border-bottom: 2px solid #000 !important;
+        border-left: 1px solid #000 !important;
+        border-right: 1px solid #000 !important;
+      }
+
+      /* Respiro entre encabezado repetido y la primera fila en páginas siguientes */
+      .voucher-table tbody tr:first-child td {
+        padding-top: 5px !important;
+      }
+
+      .voucher-table tr {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      .voucher-table td {
+        padding: 3.5px 3px !important;
+        line-height: 1.22 !important;
+        border-bottom: 1px solid #94a3b8 !important;
+        border-right: 1px dotted #94a3b8 !important;
+      }
+
+      .voucher-table td:first-child {
+        border-left: 1px solid #000 !important;
+      }
+
+      .voucher-table td.solid-col {
+        border-right: 1px solid #000 !important;
+        border-bottom: 1px solid #000 !important;
+      }
+
+      .cell-selected,
+      .cell-editing {
+        outline: none !important;
+        background-color: transparent !important;
+      }
+    }
+  </style>
+</head>
+<body class="density-normal print-single-mode">
+
+  <!-- Barra de Control -->
+  <header class="topbar no-print">
+    <div class="topbar-brand">
+      <div class="brand-badge">DP WORLD <span>Posorja</span></div>
+      <div class="topbar-title">
+        <h1>Voucher de Embarque Reefer — Por Línea</h1>
+        <p>Separación automática por Line Op · Edición tipo Excel · Impresión Vertical</p>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <select id="densitySelect" class="density-select" title="Densidad de impresión vertical">
+        <option value="compact">Densidad: Compacta</option>
+        <option value="normal" selected>Densidad: Normal</option>
+        <option value="expanded">Densidad: Expandida</option>
+      </select>
+
+      <button id="btnPrintCurrent" class="btn btn-primary" disabled>🖨️ Imprimir Línea Actual</button>
+      <button id="btnPrintAll" class="btn btn-light" disabled>🖨️ Imprimir Todas las Líneas</button>
+      <button id="btnExportExcel" class="btn btn-success" disabled>📥 Descargar Excel (.xlsx)</button>
+      <button id="btnReset" class="btn btn-danger">🗑️ Limpiar Todo</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Flujo de 3 Pasos -->
+    <section class="steps-grid no-print">
+      <!-- PASO 1 -->
+      <div class="step-card">
+        <div>
+          <div class="step-header">
+            <span class="step-badge">PASO 1 · ARCHIVO GENERAL</span>
+            <span id="statusStep1" class="step-status">Pendiente</span>
+          </div>
+          <h3>Cargar Archivo General de Embarque</h3>
+          <p>Detecta automáticamente cuántas líneas (<strong>Line Op</strong>) hay, crea una hoja por cada línea y llena ambas columnas <strong>Temp.</strong> + <strong>Remarks = "OK"</strong>.</p>
+        </div>
+        <label class="file-drop" for="fileStep1">
+          📂 <strong>Seleccionar Excel General</strong> (ej. COOPER CMA2026129 EXPO.xlsx)
+          <input type="file" id="fileStep1" accept=".xlsx,.xls,.csv" />
+        </label>
+      </div>
+
+      <!-- PASO 2 -->
+      <div class="step-card">
+        <div>
+          <div class="step-header">
+            <span class="step-badge">PASO 2 · ARCHIVO DE LÍNEA</span>
+            <span id="statusStep2" class="step-status">Pendiente</span>
+          </div>
+          <h3>Completar Datos Vacíos por Línea</h3>
+          <p>Sube el voucher de una o varias líneas (ej. <code>Report (2).xls</code>). Extrae Vessel/Voyage y llena <strong>solo celdas vacías</strong> (Export, Vent., Commodity, POL, Temp. y Remarks = OK).</p>
+        </div>
+        <label class="file-drop" for="fileStep2">
+          📂 <strong>Seleccionar Archivo(s) de Línea</strong> (uno o varios .xls/.xlsx)
+          <input type="file" id="fileStep2" accept=".xlsx,.xls,.csv" multiple />
+        </label>
+      </div>
+
+      <!-- PASO 3 -->
+      <div class="step-card">
+        <div>
+          <div class="step-header">
+            <span class="step-badge">PASO 3 · CONSOLIDACIÓN GENERAL</span>
+            <span id="statusStep3" class="step-status">Pendiente</span>
+          </div>
+          <h3>Completar Tiempos y Lecturas</h3>
+          <p>Usa el archivo general (o sube uno actualizado) para completar <strong>Load Time</strong>, ambas <strong>Temp.</strong>, <strong>Return</strong>, <strong>Supply</strong> y <strong>POD</strong> sin sobrescribir lo ya lleno.</p>
+        </div>
+        <div class="step-options">
+          <label><input type="checkbox" id="chkFillCommodity" checked /> Completar Commodity vacío desde Cmdty Dponline</label>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button id="btnRunStep3Cached" class="btn btn-warning" style="flex:1; justify-content:center;" disabled>⚡ Completar con General Cargado</button>
+            <label class="btn btn-light" style="cursor:pointer; margin:0;" for="fileStep3">
+              🔄 Subir Otro General
+              <input type="file" id="fileStep3" accept=".xlsx,.xls,.csv" style="display:none;" />
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Consola de Diagnóstico -->
+    <section class="log-panel no-print">
+      <div class="log-header">
+        <span>📋 LOG DE DIAGNÓSTICO EN TIEMPO REAL</span>
+        <span id="sheetjsStatus">Verificando motor Excel...</span>
+      </div>
+      <div id="logBody" class="log-body">
+        <div class="log-info">Sistema listo. Sube el Archivo General de Embarque en el Paso 1 para comenzar.</div>
+      </div>
+    </section>
+
+    <!-- Barra de Pestañas por Línea -->
+    <section id="tabsBar" class="tabs-bar no-print" style="display:none;">
+      <div id="tabsList" class="tabs-list"></div>
+      <div class="kbd-hint">⌨️ Navegación Excel: <strong>Flechas</strong> mover · <strong>Enter / F2 / Doble clic</strong> editar · <strong>Esc</strong> cancelar</div>
+    </section>
+
+    <!-- Contenedor de Hojas Generadas -->
+    <section id="sheetsContainer">
+      <div class="empty-state">
+        <h3 style="margin-top:0; color:var(--dp-navy);">Aún no se han generado hojas de Voucher</h3>
+        <p>Carga tu archivo en el <strong>Paso 1</strong> para detectar automáticamente las líneas navieras y generar sus formatos listos para imprimir.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Estado Global
+    const state = {
+      lines: {},            // { COS: { lineOp, vessel, voyage, rows: [...] }, CMA: {...} }
+      lineOrder: [],        // ['CMA', 'COS', ...]
+      activeLine: null,     // 'CMA'
+      generalRecords: [],   // Registros parseados del archivo general
+      selectedCell: null    // { lineOp, rowIdx, colKey } (rowIdx: -1 vessel, -2 voyage, -3 lineOp, >=0 fila tabla)
+    };
+
+    const COLUMNS = [
+      { key: 'num',       label: 'N°',        cls: 'col-num',       editable: false },
+      { key: 'unit',      label: 'Unit',      cls: 'col-unit',      editable: true },
+      { key: 'tempReq',   label: 'Temp.',     cls: '',              editable: true },
+      { key: 'vent',      label: 'Vent.',     cls: '',              editable: true },
+      { key: 'exportName',label: 'Export',    cls: 'col-export',    editable: true },
+      { key: 'commodity', label: 'Commodity', cls: 'col-commodity', editable: true },
+      { key: 'pol',       label: 'POL',       cls: '',              editable: true },
+      { key: 'pod',       label: 'POD',       cls: '',              editable: true },
+      { key: 'loadTime',  label: 'Load Time', cls: '',              editable: true },
+      { key: 'tempOp',    label: 'Temp.',     cls: 'solid-col',     editable: true },
+      { key: 'returnTemp',label: 'Return',    cls: 'solid-col',     editable: true },
+      { key: 'supplyTemp',label: 'Supply',    cls: 'solid-col',     editable: true },
+      { key: 'remarks',   label: 'Remarks',   cls: 'solid-col col-remarks', editable: true }
+    ];
+
+    // Utilidades de Log
+    function logMsg(text, type = 'info') {
+      const logBody = document.getElementById('logBody');
+      const div = document.createElement('div');
+      div.className = 'log-' + type;
+      const now = new Date().toLocaleTimeString('es-EC', { hour12: false });
+      div.textContent = `[${now}] ${text}`;
+      logBody.appendChild(div);
+      logBody.scrollTop = logBody.scrollHeight;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const st = document.getElementById('sheetjsStatus');
+      if (typeof XLSX !== 'undefined') {
+        st.textContent = '✅ Motor Excel activo (SheetJS)';
+        st.style.color = '#4ade80';
+      } else {
+        st.textContent = '⚠️ Modo respaldo HTML/CSV activo';
+        st.style.color = '#fbbf24';
+      }
+    });
+
+    // Limpieza y formateo de valores
+    function cleanStr(val) {
+      if (val === null || val === undefined) return '';
+      let s = String(val).trim();
+      if (/^(null(\s+null)?|nan|undefined|-|n\/a)$/i.test(s)) return '';
+      return s;
+    }
+
+    function formatTemp(val) {
+      let s = cleanStr(val);
+      if (!s) return '';
+      // Si es un número puro como -20 o 13.5, agregar .0 si es entero y ' c'
+      if (/^[+-]?\d+(\.\d+)?$/.test(s)) {
+        const num = parseFloat(s);
+        return num.toFixed(1) + ' c';
+      }
+      // Si ya trae c/C al final
+      s = s.replace(/\s*°?\s*[cC]$/, ' c');
+      return s;
+    }
+
+    function formatVent(val) {
+      let s = cleanStr(val);
+      if (!s) return '';
+      if (/^[+-]?\d+(\.\d+)?$/.test(s)) {
+        return parseFloat(s).toFixed(1) + ' %';
+      }
+      return s;
+    }
+
+    function formatDateTime(val) {
+      if (val === null || val === undefined || val === '') return '';
+      if (val instanceof Date && !isNaN(val)) {
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const yy = String(val.getFullYear()).slice(-2);
+        const mmm = months[val.getMonth()];
+        const dd = String(val.getDate()).padStart(2, '0');
+        const hh = String(val.getHours()).padStart(2, '0');
+        const mm = String(val.getMinutes()).padStart(2, '0');
+        return `${yy}-${mmm}-${dd} ${hh}${mm}`;
+      }
+      let s = cleanStr(val);
+      // Convertir timestamp ISO "2026-11-21 18:02:10.111000" a formato compacto "26-Nov-21 1802"
+      const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+      if (isoMatch) {
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const yy = isoMatch[1].slice(-2);
+        const mIdx = parseInt(isoMatch[2], 10) - 1;
+        const dd = isoMatch[3];
+        const hh = isoMatch[4];
+        const mm = isoMatch[5];
+        return `${yy}-${months[mIdx] || isoMatch[2]}-${dd} ${hh}${mm}`;
+      }
+      return s;
+    }
+
+    function splitVesselVoyage(rawVessel, fallbackVisit) {
+      const s = cleanStr(rawVessel);
+      if (!s) return { vessel: cleanStr(fallbackVisit), voyage: '' };
+      const parts = s.split(/\s+/);
+      if (parts.length >= 2) {
+        const last = parts[parts.length - 1];
+        if (/\d/.test(last) && last.length >= 4) {
+          return {
+            vessel: parts.slice(0, -1).join(' '),
+            voyage: last
+          };
+        }
+      }
+      return { vessel: s, voyage: cleanStr(fallbackVisit) };
+    }
+
+    // Lector universal de archivos (Excel binario o HTML-XLS de respaldo)
+    async function readWorkbookMatrices(file) {
+      const buffer = await file.arrayBuffer();
+      if (typeof XLSX !== 'undefined') {
+        const wb = XLSX.read(buffer, { type: 'array', cellDates: true });
+        return wb.SheetNames.map(name => ({
+          name,
+          matrix: XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: '' })
+        }));
+      }
+      // Respaldo si el archivo .xls es en realidad una tabla HTML exportada por N4/Report
+      const text = new TextDecoder('utf-8').decode(buffer);
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'text/html');
+      const tables = Array.from(doc.querySelectorAll('table'));
+      if (tables.length > 0) {
+        return tables.map((tbl, idx) => {
+          const matrix = Array.from(tbl.querySelectorAll('tr')).map(tr =>
+            Array.from(tr.querySelectorAll('th,td')).map(td => td.textContent.trim())
+          );
+          return { name: `Sheet${idx + 1}`, matrix };
+        });
+      }
+      throw new Error('No se pudo interpretar el archivo sin SheetJS.');
+    }
+
+    // Parser del Archivo General (UnitFacilityVisit)
+    function parseGeneralMatrix(matrix) {
+      let headerIdx = -1;
+      for (let r = 0; r < Math.min(matrix.length, 25); r++) {
+        const rowNorm = matrix[r].map(c => cleanStr(c).toLowerCase());
+        if (rowNorm.includes('unit nbr') || (rowNorm.includes('unit') && rowNorm.includes('line op'))) {
+          headerIdx = r;
+          break;
+        }
+      }
+      if (headerIdx === -1) return [];
+
+      const headers = matrix[headerIdx].map(c => cleanStr(c).toLowerCase());
+      const findCol = (candidates) => {
+        for (const cand of candidates) {
+          const idx = headers.findIndex(h => h === cand || h.includes(cand));
+          if (idx !== -1) return idx;
+        }
+        return -1;
+      };
+
+      const idxUnit     = findCol(['unit nbr', 'unit']);
+      const idxLine     = findCol(['line op', 'line']);
+      const idxVisit    = findCol(['o/b actual visit', 'outbound visit', 'vessel']);
+      const idxLoaded   = findCol(['loaded', 'load time']);
+      const idxTempReq  = findCol(['temp required', 'temp.']);
+      const idxReturn   = findCol(['last temp read', 'return']);
+      const idxSupply   = findCol(['last supply temp', 'supply']);
+      const idxPod      = findCol(['pod']);
+      const idxCmdty    = findCol(['cmdty dponline', 'commodity', 'cmdty']);
+      const idxShipper  = findCol(['shipper', 'export']);
+      const idxVent     = findCol(['vent']);
+      const idxPol      = findCol(['pol']);
+
+      if (idxUnit === -1 || idxLine === -1) return [];
+
+      const records = [];
+      for (let r = headerIdx + 1; r < matrix.length; r++) {
+        const row = matrix[r];
+        if (!row) continue;
+        const unit = cleanStr(row[idxUnit]).toUpperCase();
+        const lineOp = cleanStr(row[idxLine]).toUpperCase();
+        if (!unit || !lineOp || unit === 'UNIT NBR') continue;
+
+        const tReq = idxTempReq !== -1 ? formatTemp(row[idxTempReq]) : '';
+
+        records.push({
+          unit,
+          lineOp,
+          visit: idxVisit !== -1 ? cleanStr(row[idxVisit]) : '',
+          loadTime: idxLoaded !== -1 ? formatDateTime(row[idxLoaded]) : '',
+          tempReq: tReq,
+          tempOp: tReq, // Ambas columnas Temp. se llenan con la temperatura solicitada del archivo inicial
+          returnTemp: idxReturn !== -1 ? formatTemp(row[idxReturn]) : '',
+          supplyTemp: idxSupply !== -1 ? formatTemp(row[idxSupply]) : '',
+          pod: idxPod !== -1 ? cleanStr(row[idxPod]).toUpperCase() : '',
+          commodity: idxCmdty !== -1 ? cleanStr(row[idxCmdty]) : '',
+          exportName: idxShipper !== -1 ? cleanStr(row[idxShipper]) : '',
+          vent: idxVent !== -1 ? formatVent(row[idxVent]) : '',
+          pol: idxPol !== -1 ? cleanStr(row[idxPol]).toUpperCase() : ''
+        });
+      }
+      return records;
+    }
+
+    // Parser del Archivo de Línea (Report (2).xls o similar)
+    function parseLineReportMatrix(matrix) {
+      let rawVessel = '';
+      let lineOp = '';
+      let headerIdx = -1;
+
+      for (let r = 0; r < Math.min(matrix.length, 20); r++) {
+        const row = matrix[r] || [];
+        for (let c = 0; c < row.length; c++) {
+          const cell = cleanStr(row[c]).toLowerCase();
+          if (cell === 'vessel' && row[c + 1]) {
+            rawVessel = cleanStr(row[c + 1]);
+          }
+          if ((cell === 'line' || cell === 'line op') && row[c + 1]) {
+            lineOp = cleanStr(row[c + 1]).toUpperCase();
+          }
+        }
+        const rowNorm = row.map(x => cleanStr(x).toLowerCase());
+        if (rowNorm.includes('unit') && (rowNorm.includes('temp.') || rowNorm.includes('pod') || rowNorm.includes('shipper') || rowNorm.includes('export'))) {
+          headerIdx = r;
+          break;
+        }
+      }
+
+      if (headerIdx === -1) return null;
+
+      const headers = matrix[headerIdx].map(c => cleanStr(c).toLowerCase());
+      const findCol = (candidates) => {
+        for (const cand of candidates) {
+          const idx = headers.findIndex(h => h === cand || h.includes(cand));
+          if (idx !== -1) return idx;
+        }
+        return -1;
+      };
+
+      const idxUnit      = findCol(['unit']);
+      const idxTemp      = findCol(['temp.']);
+      const idxVent      = findCol(['vent.']);
+      const idxShipper   = findCol(['shipper', 'export']);
+      const idxBooking   = findCol(['booking']);
+      const idxCommodity = findCol(['commodity']);
+      const idxPol       = findCol(['pol']);
+      const idxPod       = findCol(['pod']);
+      const idxLoaded    = findCol(['loaded', 'load time']);
+      const idxReturn    = findCol(['return']);
+      const idxSupply    = findCol(['supply']);
+      const idxRemarks   = findCol(['remarks']);
+
+      if (idxUnit === -1) return null;
+
+      const unitsMap = {};
+      for (let r = headerIdx + 1; r < matrix.length; r++) {
+        const row = matrix[r];
+        if (!row) continue;
+        const unit = cleanStr(row[idxUnit]).toUpperCase();
+        if (!unit || !/^[A-Z]{4}\d{6,7}$/.test(unit)) continue;
+
+        const shipperVal = idxShipper !== -1 ? cleanStr(row[idxShipper]) : '';
+        const bookingVal = idxBooking !== -1 ? cleanStr(row[idxBooking]) : '';
+        const exportVal = shipperVal || bookingVal;
+        const tVal = idxTemp !== -1 ? formatTemp(row[idxTemp]) : '';
+
+        unitsMap[unit] = {
+          unit,
+          tempReq: tVal,
+          tempOp: tVal,
+          vent: idxVent !== -1 ? formatVent(row[idxVent]) : '',
+          exportName: exportVal,
+          commodity: idxCommodity !== -1 ? cleanStr(row[idxCommodity]) : '',
+          pol: idxPol !== -1 ? cleanStr(row[idxPol]).toUpperCase() : '',
+          pod: idxPod !== -1 ? cleanStr(row[idxPod]).toUpperCase() : '',
+          loadTime: idxLoaded !== -1 ? formatDateTime(row[idxLoaded]) : '',
+          returnTemp: idxReturn !== -1 ? formatTemp(row[idxReturn]) : '',
+          supplyTemp: idxSupply !== -1 ? formatTemp(row[idxSupply]) : '',
+          remarks: idxRemarks !== -1 ? cleanStr(row[idxRemarks]) : ''
+        };
+      }
+
+      return { rawVessel, lineOp, unitsMap };
+    }
+
+    // PASO 1: Cargar Archivo General
+    document.getElementById('fileStep1').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        logMsg(`Leyendo archivo general: ${file.name}...`, 'info');
+        const sheets = await readWorkbookMatrices(file);
+        let allRecords = [];
+        for (const s of sheets) {
+          const recs = parseGeneralMatrix(s.matrix);
+          if (recs.length > 0) allRecords = allRecords.concat(recs);
+        }
+
+        if (allRecords.length === 0) {
+          logMsg('No se encontraron registros válidos (columnas Unit Nbr y Line Op).', 'err');
+          return;
+        }
+
+        state.generalRecords = allRecords;
+        state.lines = {};
+        state.lineOrder = [];
+
+        for (const rec of allRecords) {
+          if (!state.lines[rec.lineOp]) {
+            state.lines[rec.lineOp] = {
+              lineOp: rec.lineOp,
+              vessel: rec.visit,
+              voyage: '',
+              rows: []
+            };
+            state.lineOrder.push(rec.lineOp);
+          }
+          const lineObj = state.lines[rec.lineOp];
+          lineObj.rows.push({
+            num: lineObj.rows.length + 1,
+            unit: rec.unit,
+            tempReq: rec.tempReq,
+            vent: rec.vent,
+            exportName: rec.exportName,
+            commodity: rec.commodity,
+            pol: rec.pol,
+            pod: rec.pod,
+            loadTime: rec.loadTime,
+            tempOp: rec.tempOp, // Se llena también la segunda columna Temp. desde el archivo inicial
+            returnTemp: rec.returnTemp,
+            supplyTemp: rec.supplyTemp,
+            remarks: rec.unit ? 'OK' : ''
+          });
+        }
+
+        state.lineOrder.sort();
+        state.activeLine = state.lineOrder[0] || null;
+
+        const summary = state.lineOrder.map(l => `${l} (${state.lines[l].rows.length})`).join(', ');
+        logMsg(`Paso 1 completado: ${allRecords.length} contenedores divididos en ${state.lineOrder.length} línea(s): ${summary}.`, 'ok');
+
+        const st1 = document.getElementById('statusStep1');
+        st1.textContent = `${state.lineOrder.length} líneas (${allRecords.length} cnts)`;
+        st1.classList.add('done');
+
+        document.getElementById('btnRunStep3Cached').disabled = false;
+        updateActionButtons();
+        renderAll();
+      } catch (err) {
+        logMsg(`Error al procesar Paso 1: ${err.message}`, 'err');
+      } finally {
+        e.target.value = '';
+      }
+    });
+
+    // PASO 2: Cargar Archivo(s) de Línea
+    document.getElementById('fileStep2').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+
+      let totalUpdatedRows = 0;
+      let totalFilledCells = 0;
+
+      for (const file of files) {
+        try {
+          logMsg(`Procesando archivo de línea: ${file.name}...`, 'info');
+          const sheets = await readWorkbookMatrices(file);
+
+          for (const s of sheets) {
+            const parsed = parseLineReportMatrix(s.matrix);
+            if (!parsed || Object.keys(parsed.unitsMap).length === 0) continue;
+
+            // Determinar a qué línea pertenece
+            let targetLine = parsed.lineOp;
+            if (!targetLine || !state.lines[targetLine]) {
+              // Buscar coincidencia por Unit en las líneas existentes
+              const sampleUnits = Object.keys(parsed.unitsMap);
+              for (const lOp of state.lineOrder) {
+                if (state.lines[lOp].rows.some(r => sampleUnits.includes(r.unit))) {
+                  targetLine = lOp;
+                  break;
+                }
+              }
+            }
+
+            // Si aún no existe la línea (si se subió directo sin Paso 1), crearla
+            if (!targetLine) targetLine = parsed.lineOp || 'LINEA';
+            if (!state.lines[targetLine]) {
+              const vv = splitVesselVoyage(parsed.rawVessel, '');
+              state.lines[targetLine] = {
+                lineOp: targetLine,
+                vessel: vv.vessel,
+                voyage: vv.voyage,
+                rows: []
+              };
+              state.lineOrder.push(targetLine);
+              if (!state.activeLine) state.activeLine = targetLine;
+            }
+
+            const lineObj = state.lines[targetLine];
+            if (parsed.rawVessel) {
+              const vv = splitVesselVoyage(parsed.rawVessel, lineObj.vessel);
+              if (vv.vessel) lineObj.vessel = vv.vessel;
+              if (vv.voyage) lineObj.voyage = vv.voyage;
+            }
+
+            const existingByUnit = {};
+            lineObj.rows.forEach(r => { existingByUnit[r.unit] = r; });
+
+            Object.values(parsed.unitsMap).forEach(uData => {
+              let row = existingByUnit[uData.unit];
+              if (!row) {
+                row = {
+                  num: lineObj.rows.length + 1,
+                  unit: uData.unit,
+                  tempReq: '',
+                  vent: '',
+                  exportName: '',
+                  commodity: '',
+                  pol: '',
+                  pod: '',
+                  loadTime: '',
+                  tempOp: '',
+                  returnTemp: '',
+                  supplyTemp: '',
+                  remarks: 'OK'
+                };
+                lineObj.rows.push(row);
+                existingByUnit[uData.unit] = row;
+              }
+
+              let rowChanged = false;
+              const fillIfEmpty = (field, val) => {
+                if (!cleanStr(row[field]) && cleanStr(val)) {
+                  row[field] = val;
+                  totalFilledCells++;
+                  rowChanged = true;
+                }
+              };
+
+              fillIfEmpty('tempReq', uData.tempReq);
+              fillIfEmpty('tempOp', uData.tempOp || uData.tempReq);
+              fillIfEmpty('vent', uData.vent);
+              fillIfEmpty('exportName', uData.exportName);
+              fillIfEmpty('commodity', uData.commodity);
+              fillIfEmpty('pol', uData.pol);
+              fillIfEmpty('pod', uData.pod);
+              fillIfEmpty('loadTime', uData.loadTime);
+              fillIfEmpty('returnTemp', uData.returnTemp);
+              fillIfEmpty('supplyTemp', uData.supplyTemp);
+
+              if (cleanStr(row.unit) && !cleanStr(row.remarks)) {
+                row.remarks = cleanStr(uData.remarks) || 'OK';
+                totalFilledCells++;
+                rowChanged = true;
+              }
+
+              if (rowChanged) totalUpdatedRows++;
+            });
+
+            logMsg(`Línea ${targetLine}: Vessel="${lineObj.vessel}", Voyage="${lineObj.voyage}". Registros cruzados.`, 'ok');
+          }
+        } catch (err) {
+          logMsg(`Error en archivo de línea ${file.name}: ${err.message}`, 'err');
+        }
+      }
+
+      const st2 = document.getElementById('statusStep2');
+      st2.textContent = `${totalFilledCells} celdas completadas`;
+      st2.classList.add('done');
+
+      logMsg(`Paso 2 finalizado: ${totalUpdatedRows} filas actualizadas (${totalFilledCells} celdas vacías completadas).`, 'ok');
+      updateActionButtons();
+      renderAll();
+      e.target.value = '';
+    });
+
+    // PASO 3: Completar desde Archivo General (cargado o nuevo)
+    function applyGeneralConsolidation(records) {
+      if (!records || records.length === 0) {
+        logMsg('No hay datos del archivo general para consolidar.', 'warn');
+        return;
+      }
+      if (state.lineOrder.length === 0) {
+        logMsg('Primero genera al menos una hoja en el Paso 1 o Paso 2.', 'warn');
+        return;
+      }
+
+      const fillCommodity = document.getElementById('chkFillCommodity').checked;
+      const byUnit = {};
+      records.forEach(r => { byUnit[r.unit] = r; });
+
+      let updatedRows = 0;
+      let filledCells = 0;
+
+      for (const lineOp of state.lineOrder) {
+        const lineObj = state.lines[lineOp];
+        for (const row of lineObj.rows) {
+          const gen = byUnit[row.unit];
+          if (!gen) continue;
+
+          let rowChanged = false;
+          const fillIfEmpty = (field, val) => {
+            if (!cleanStr(row[field]) && cleanStr(val)) {
+              row[field] = val;
+              filledCells++;
+              rowChanged = true;
+            }
+          };
+
+          fillIfEmpty('loadTime', gen.loadTime);
+          fillIfEmpty('tempReq', gen.tempReq);
+          fillIfEmpty('tempOp', gen.tempOp || gen.tempReq);
+          fillIfEmpty('returnTemp', gen.returnTemp);
+          fillIfEmpty('supplyTemp', gen.supplyTemp);
+          fillIfEmpty('pod', gen.pod);
+          if (fillCommodity) {
+            fillIfEmpty('commodity', gen.commodity);
+          }
+
+          if (cleanStr(row.unit) && !cleanStr(row.remarks)) {
+            row.remarks = 'OK';
+            filledCells++;
+            rowChanged = true;
+          }
+
+          if (rowChanged) updatedRows++;
+        }
+      }
+
+      const st3 = document.getElementById('statusStep3');
+      st3.textContent = `${filledCells} celdas completadas`;
+      st3.classList.add('done');
+
+      logMsg(`Paso 3 completado: ${updatedRows} filas consolidadas (${filledCells} celdas completadas sin sobrescribir datos previos).`, 'ok');
+      renderAll();
+    }
+
+    document.getElementById('btnRunStep3Cached').addEventListener('click', () => {
+      applyGeneralConsolidation(state.generalRecords);
+    });
+
+    document.getElementById('fileStep3').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        logMsg(`Leyendo archivo general actualizado: ${file.name}...`, 'info');
+        const sheets = await readWorkbookMatrices(file);
+        let allRecords = [];
+        for (const s of sheets) {
+          const recs = parseGeneralMatrix(s.matrix);
+          if (recs.length > 0) allRecords = allRecords.concat(recs);
+        }
+        if (allRecords.length > 0) {
+          state.generalRecords = allRecords;
+          applyGeneralConsolidation(allRecords);
+        } else {
+          logMsg('No se encontraron registros válidos en el archivo del Paso 3.', 'err');
+        }
+      } catch (err) {
+        logMsg(`Error en Paso 3: ${err.message}`, 'err');
+      } finally {
+        e.target.value = '';
+      }
+    });
+
+    // Renderizado de pestañas y hojas
+    function renderAll() {
+      const tabsBar = document.getElementById('tabsBar');
+      const tabsList = document.getElementById('tabsList');
+      const sheetsContainer = document.getElementById('sheetsContainer');
+
+      if (state.lineOrder.length === 0) {
+        tabsBar.style.display = 'none';
+        sheetsContainer.innerHTML = `
+          <div class="empty-state">
+            <h3 style="margin-top:0; color:var(--dp-navy);">Aún no se han generado hojas de Voucher</h3>
+            <p>Carga tu archivo en el <strong>Paso 1</strong> para detectar automáticamente las líneas navieras y generar sus formatos listos para imprimir.</p>
+          </div>`;
+        return;
+      }
+
+      tabsBar.style.display = 'flex';
+      tabsList.innerHTML = '';
+
+      state.lineOrder.forEach(lineOp => {
+        const lineObj = state.lines[lineOp];
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn' + (state.activeLine === lineOp ? ' active' : '');
+        btn.innerHTML = `Línea: ${lineOp} <span class="tab-count">${lineObj.rows.length}</span>`;
+        btn.onclick = () => {
+          state.activeLine = lineOp;
+          state.selectedCell = null;
+          renderAll();
+        };
+        tabsList.appendChild(btn);
+      });
+
+      sheetsContainer.innerHTML = '';
+      state.lineOrder.forEach(lineOp => {
+        const lineObj = state.lines[lineOp];
+        const sheetEl = buildVoucherSheetElement(lineObj, lineOp === state.activeLine);
+        sheetsContainer.appendChild(sheetEl);
+      });
+
+      restoreSelectionVisual();
+    }
+
+    function buildVoucherSheetElement(lineObj, isActive) {
+      const div = document.createElement('div');
+      div.className = 'voucher-sheet' + (isActive ? '' : ' hidden-screen');
+      div.dataset.line = lineObj.lineOp;
+
+      const minRows = Math.max(lineObj.rows.length, 12);
+      let rowsHtml = '';
+
+      for (let i = 0; i < minRows; i++) {
+        const row = lineObj.rows[i] || {
+          num: i + 1,
+          unit: '',
+          tempReq: '',
+          vent: '',
+          exportName: '',
+          commodity: '',
+          pol: '',
+          pod: '',
+          loadTime: '',
+          tempOp: '',
+          returnTemp: '',
+          supplyTemp: '',
+          remarks: ''
+        };
+
+        // Garantizar Remarks = OK mientras haya contenedor
+        if (cleanStr(row.unit) && !cleanStr(row.remarks)) {
+          row.remarks = 'OK';
+        }
+
+        const tds = COLUMNS.map(col => {
+          const val = col.key === 'num' ? (i + 1) : (row[col.key] || '');
+          return `<td class="${col.cls}" data-line="${lineObj.lineOp}" data-row="${i}" data-col="${col.key}" data-editable="${col.editable}">${escapeHtml(val)}</td>`;
+        }).join('');
+
+        rowsHtml += `<tr>${tds}</tr>`;
+      }
+
+      div.innerHTML = `
+        <div class="voucher-top">
+          <div class="dp-logo-box">
+            <div class="dp-logo-text">
+              <div class="dp-logo-main">DP WORLD <span class="dp-globe"></span></div>
+              <div class="dp-logo-sub">Posorja</div>
+            </div>
+          </div>
+
+          <div class="voucher-title-box">
+            <div class="voucher-title-row">
+              <div class="voucher-title-words">Voucher<br>Embarque</div>
+              <svg class="crane-icon" viewBox="0 0 40 40" fill="none" stroke-width="1.8">
+                <path d="M6 34h28M12 34V8h22M12 14h20M12 8l14 6M28 14v9" />
+                <rect x="23" y="23" width="10" height="6" />
+                <path d="M9 34l3-6 3 6" />
+              </svg>
+            </div>
+            <div class="voucher-title-bar"></div>
+          </div>
+        </div>
+
+        <table class="meta-table">
+          <tr>
+            <td class="meta-label">Vessel</td>
+            <td class="meta-val" data-line="${lineObj.lineOp}" data-row="-1" data-col="vessel" data-editable="true">${escapeHtml(lineObj.vessel)}</td>
+          </tr>
+          <tr>
+            <td class="meta-label">Voyage</td>
+            <td class="meta-val" data-line="${lineObj.lineOp}" data-row="-2" data-col="voyage" data-editable="true">${escapeHtml(lineObj.voyage)}</td>
+          </tr>
+          <tr>
+            <td class="meta-label">Line Op</td>
+            <td class="meta-val" data-line="${lineObj.lineOp}" data-row="-3" data-col="lineOp" data-editable="false">${escapeHtml(lineObj.lineOp)}</td>
+          </tr>
+        </table>
+
+        <table class="voucher-table">
+          <colgroup>
+            <col class="w-num" />
+            <col class="w-unit" />
+            <col class="w-temp1" />
+            <col class="w-vent" />
+            <col class="w-export" />
+            <col class="w-commodity" />
+            <col class="w-pol" />
+            <col class="w-pod" />
+            <col class="w-loadtime" />
+            <col class="w-temp2" />
+            <col class="w-return" />
+            <col class="w-supply" />
+            <col class="w-remarks" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Unit</th>
+              <th>Temp.</th>
+              <th>Vent.</th>
+              <th>Export</th>
+              <th>Commodity</th>
+              <th>POL</th>
+              <th>POD</th>
+              <th>Load Time</th>
+              <th>Temp.</th>
+              <th>Return</th>
+              <th>Supply</th>
+              <th class="th-remarks">Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      `;
+
+      return div;
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Navegación y edición tipo Excel
+    function getCellElement(lineOp, rowIdx, colKey) {
+      return document.querySelector(`td[data-line="${lineOp}"][data-row="${rowIdx}"][data-col="${colKey}"]`);
+    }
+
+    function selectCell(lineOp, rowIdx, colKey) {
+      document.querySelectorAll('.cell-selected').forEach(el => el.classList.remove('cell-selected'));
+      state.selectedCell = { lineOp, rowIdx, colKey };
+      const el = getCellElement(lineOp, rowIdx, colKey);
+      if (el) {
+        el.classList.add('cell-selected');
+        el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
+    }
+
+    function restoreSelectionVisual() {
+      if (!state.selectedCell) return;
+      const { lineOp, rowIdx, colKey } = state.selectedCell;
+      if (lineOp !== state.activeLine) return;
+      const el = getCellElement(lineOp, rowIdx, colKey);
+      if (el) el.classList.add('cell-selected');
+    }
+
+    function startEditingCell(td, initialChar = null) {
+      if (!td || td.dataset.editable !== 'true' || td.isContentEditable) return;
+      const prevValue = td.textContent;
+      td.dataset.prevValue = prevValue;
+      td.contentEditable = 'true';
+      td.classList.add('cell-editing');
+      td.focus();
+
+      if (initialChar !== null) {
+        td.textContent = initialChar;
+        const range = document.createRange();
+        range.selectNodeContents(td);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } else {
+        const range = document.createRange();
+        range.selectNodeContents(td);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+
+    function commitEditingCell(td, cancel = false) {
+      if (!td || !td.isContentEditable) return;
+      const lineOp = td.dataset.line;
+      const rowIdx = parseInt(td.dataset.row, 10);
+      const colKey = td.dataset.col;
+      const lineObj = state.lines[lineOp];
+
+      let finalVal = cancel ? (td.dataset.prevValue || '') : td.textContent.trim();
+      td.contentEditable = 'false';
+      td.classList.remove('cell-editing');
+
+      if (!lineObj) return;
+
+      if (rowIdx === -1) {
+        lineObj.vessel = finalVal;
+        td.textContent = finalVal;
+        return;
+      }
+      if (rowIdx === -2) {
+        lineObj.voyage = finalVal;
+        td.textContent = finalVal;
+        return;
+      }
+
+      // Asegurar existencia de la fila en memoria si se editó una fila vacía adicional
+      while (lineObj.rows.length <= rowIdx) {
+        lineObj.rows.push({
+          num: lineObj.rows.length + 1,
+          unit: '',
+          tempReq: '',
+          vent: '',
+          exportName: '',
+          commodity: '',
+          pol: '',
+          pod: '',
+          loadTime: '',
+          tempOp: '',
+          returnTemp: '',
+          supplyTemp: '',
+          remarks: ''
+        });
+      }
+
+      const row = lineObj.rows[rowIdx];
+      row[colKey] = finalVal;
+      td.textContent = finalVal;
+
+      // Sincronizar ambas columnas Temp. si se edita una y la otra está vacía
+      if (colKey === 'tempReq' && finalVal && !cleanStr(row.tempOp)) {
+        row.tempOp = finalVal;
+        const otherTd = getCellElement(lineOp, rowIdx, 'tempOp');
+        if (otherTd) otherTd.textContent = finalVal;
+      } else if (colKey === 'tempOp' && finalVal && !cleanStr(row.tempReq)) {
+        row.tempReq = finalVal;
+        const otherTd = getCellElement(lineOp, rowIdx, 'tempReq');
+        if (otherTd) otherTd.textContent = finalVal;
+      }
+
+      // Regla: Remarks = OK mientras haya contenedor
+      if (cleanStr(row.unit) && !cleanStr(row.remarks)) {
+        row.remarks = 'OK';
+        const remTd = getCellElement(lineOp, rowIdx, 'remarks');
+        if (remTd) remTd.textContent = 'OK';
+      }
+    }
+
+    document.getElementById('sheetsContainer').addEventListener('click', (e) => {
+      const td = e.target.closest('td[data-line]');
+      if (!td) return;
+      const editingTd = document.querySelector('td.cell-editing');
+      if (editingTd && editingTd !== td) {
+        commitEditingCell(editingTd, false);
+      }
+      selectCell(td.dataset.line, parseInt(td.dataset.row, 10), td.dataset.col);
+    });
+
+    document.getElementById('sheetsContainer').addEventListener('dblclick', (e) => {
+      const td = e.target.closest('td[data-line]');
+      if (!td) return;
+      selectCell(td.dataset.line, parseInt(td.dataset.row, 10), td.dataset.col);
+      startEditingCell(td, null);
+    });
+
+    document.getElementById('sheetsContainer').addEventListener('focusout', (e) => {
+      const td = e.target.closest('td.cell-editing');
+      if (td) {
+        setTimeout(() => {
+          if (document.activeElement !== td && td.isContentEditable) {
+            commitEditingCell(td, false);
+          }
+        }, 40);
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!state.selectedCell || !state.activeLine) return;
+      const { lineOp, rowIdx, colKey } = state.selectedCell;
+      const td = getCellElement(lineOp, rowIdx, colKey);
+      if (!td) return;
+
+      const isEditing = td.isContentEditable;
+      const editableCols = COLUMNS.filter(c => c.editable).map(c => c.key);
+      const lineObj = state.lines[lineOp];
+      const maxRow = Math.max(lineObj.rows.length, 12) - 1;
+
+      if (isEditing) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          commitEditingCell(td, true);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          commitEditingCell(td, false);
+          const nextRow = e.shiftKey ? Math.max(0, rowIdx - 1) : Math.min(maxRow, rowIdx + 1);
+          if (rowIdx >= 0) selectCell(lineOp, nextRow, colKey);
+        } else if (e.key === 'Tab') {
+          e.preventDefault();
+          commitEditingCell(td, false);
+          if (rowIdx >= 0) {
+            const cIdx = editableCols.indexOf(colKey);
+            const nextCIdx = e.shiftKey ? Math.max(0, cIdx - 1) : Math.min(editableCols.length - 1, cIdx + 1);
+            selectCell(lineOp, rowIdx, editableCols[nextCIdx]);
+          }
+        }
+        return;
+      }
+
+      // Modo Navegación tipo Excel
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Tab', 'F2'].includes(e.key)) {
+        e.preventDefault();
+      }
+
+      if (e.key === 'F2') {
+        startEditingCell(td, null);
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        if (rowIdx < 0) {
+          startEditingCell(td, null);
+        } else {
+          const nextRow = e.shiftKey ? Math.max(0, rowIdx - 1) : Math.min(maxRow, rowIdx + 1);
+          selectCell(lineOp, nextRow, colKey);
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        if (rowIdx === -1) selectCell(lineOp, -2, 'voyage');
+        else if (rowIdx === -2) selectCell(lineOp, 0, editableCols[0]);
+        else if (rowIdx >= 0) selectCell(lineOp, Math.min(maxRow, rowIdx + 1), colKey);
+        return;
+      }
+
+      if (e.key === 'ArrowUp') {
+        if (rowIdx === 0) selectCell(lineOp, -2, 'voyage');
+        else if (rowIdx === -2) selectCell(lineOp, -1, 'vessel');
+        else if (rowIdx > 0) selectCell(lineOp, rowIdx - 1, colKey);
+        return;
+      }
+
+      if (e.key === 'ArrowRight' || (e.key === 'Tab' && !e.shiftKey)) {
+        if (rowIdx >= 0) {
+          const cIdx = editableCols.indexOf(colKey);
+          if (cIdx < editableCols.length - 1) {
+            selectCell(lineOp, rowIdx, editableCols[cIdx + 1]);
+          } else if (rowIdx < maxRow) {
+            selectCell(lineOp, rowIdx + 1, editableCols[0]);
+          }
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey)) {
+        if (rowIdx >= 0) {
+          const cIdx = editableCols.indexOf(colKey);
+          if (cIdx > 0) {
+            selectCell(lineOp, rowIdx, editableCols[cIdx - 1]);
+          } else if (rowIdx > 0) {
+            selectCell(lineOp, rowIdx - 1, editableCols[editableCols.length - 1]);
+          }
+        }
+        return;
+      }
+
+      // Escritura directa al presionar una tecla imprimible
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        startEditingCell(td, e.key);
+      }
+    });
+
+    // Densidad de impresión
+    document.getElementById('densitySelect').addEventListener('change', (e) => {
+      document.body.classList.remove('density-compact', 'density-normal', 'density-expanded');
+      document.body.classList.add('density-' + e.target.value);
+    });
+
+    // Botones de Impresión
+    document.getElementById('btnPrintCurrent').addEventListener('click', () => {
+      document.body.classList.remove('print-all-mode');
+      document.body.classList.add('print-single-mode');
+      window.print();
+    });
+
+    document.getElementById('btnPrintAll').addEventListener('click', () => {
+      document.body.classList.remove('print-single-mode');
+      document.body.classList.add('print-all-mode');
+      window.print();
+    });
+
+    window.addEventListener('afterprint', () => {
+      document.body.classList.remove('print-all-mode');
+      document.body.classList.add('print-single-mode');
+    });
+
+    // Exportación a Excel (.xlsx) dividida por líneas en cada hoja
+    document.getElementById('btnExportExcel').addEventListener('click', () => {
+      if (typeof XLSX === 'undefined') {
+        logMsg('El motor SheetJS no está disponible para exportar .xlsx en este navegador.', 'err');
+        return;
+      }
+      if (state.lineOrder.length === 0) return;
+
+      const wb = XLSX.utils.book_new();
+      state.lineOrder.forEach(lineOp => {
+        const lineObj = state.lines[lineOp];
+        const aoa = [
+          ['DP WORLD Posorja', '', '', '', '', '', '', '', '', '', '', '', 'Voucher Embarque'],
+          [],
+          ['Vessel', lineObj.vessel],
+          ['Voyage', lineObj.voyage],
+          ['Line Op', lineObj.lineOp],
+          [],
+          ['N°', 'Unit', 'Temp.', 'Vent.', 'Export', 'Commodity', 'POL', 'POD', 'Load Time', 'Temp.', 'Return', 'Supply', 'Remarks']
+        ];
+
+        lineObj.rows.forEach((r, idx) => {
+          aoa.push([
+            idx + 1,
+            r.unit,
+            r.tempReq,
+            r.vent,
+            r.exportName,
+            r.commodity,
+            r.pol,
+            r.pod,
+            r.loadTime,
+            r.tempOp || r.tempReq,
+            r.returnTemp,
+            r.supplyTemp,
+            cleanStr(r.unit) ? (cleanStr(r.remarks) || 'OK') : ''
+          ]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws['!cols'] = [
+          { wch: 5 }, { wch: 15 }, { wch: 9 }, { wch: 9 }, { wch: 36 },
+          { wch: 24 }, { wch: 8 }, { wch: 9 }, { wch: 16 }, { wch: 9 },
+          { wch: 9 }, { wch: 9 }, { wch: 10 }
+        ];
+        // Configurar página vertical ajustada a 1 página de ancho
+        ws['!pageSetup'] = { orientation: 'portrait', fitToWidth: 1, fitToHeight: 0 };
+        XLSX.utils.book_append_sheet(wb, ws, lineOp.slice(0, 31));
+      });
+
+      const vesselName = (state.lines[state.lineOrder[0]]?.vessel || 'Embarque').replace(/[^a-zA-Z0-9_-]/g, '_');
+      XLSX.writeFile(wb, `Voucher_Embarque_${vesselName}.xlsx`);
+      logMsg(`Archivo Excel exportado con ${state.lineOrder.length} hoja(s) divididas por línea.`, 'ok');
+    });
+
+    // Limpiar Todo
+    document.getElementById('btnReset').addEventListener('click', () => {
+      state.lines = {};
+      state.lineOrder = [];
+      state.activeLine = null;
+      state.generalRecords = [];
+      state.selectedCell = null;
+
+      ['statusStep1', 'statusStep2', 'statusStep3'].forEach(id => {
+        const el = document.getElementById(id);
+        el.textContent = 'Pendiente';
+        el.classList.remove('done');
+      });
+
+      document.getElementById('btnRunStep3Cached').disabled = true;
+      updateActionButtons();
+      renderAll();
+      logMsg('Sistema reiniciado. Listo para una nueva nave.', 'info');
+    });
+
+    function updateActionButtons() {
+      const hasLines = state.lineOrder.length > 0;
+      document.getElementById('btnPrintCurrent').disabled = !hasLines;
+      document.getElementById('btnPrintAll').disabled = !hasLines;
+      document.getElementById('btnExportExcel').disabled = !hasLines;
+    }
+  </script>
+</body>
+</html>
