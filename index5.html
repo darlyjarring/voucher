@@ -984,9 +984,9 @@
       const idxLine = findCol(['line op', 'line', 'line operator', 'opr'], ['line op', 'line']);
       const idxObVisit = findCol(['o/b actual visit', 'ob actual visit', 'vessel', 'voyage'], ['o/b actual visit', 'vessel']);
       const idxLoaded = findCol(['loaded', 'load time'], ['loaded']);
-      const idxLastMove = findCol(['last move', 'lastmove', 'last move time'], ['last move']);
-      const idxLastMove = findCol(['last move', 'lastmove', 'last move time'], ['last move']);
       const idxTempReq = findCol(['temp required (c)', 'temp required', 'temp.'], ['temp required']);
+      const idxVent = findCol(['vent.', 'vent', 'ventilation', 'air vent', 'venting'], ['vent.', 'vent']);
+      const idxVent = findCol(['vent.', 'vent', 'ventilation', 'air vent', 'venting'], ['vent.', 'vent']);
       const idxReturn = findCol(['last temp read (c)', 'last temp read', 'return'], ['last temp read']);
       const idxSupply = findCol(['last supply temp (c)', 'last supply temp', 'supply'], ['last supply temp']);
       const idxCmdty = findCol(['cmdty dponline', 'commodity', 'cmdty'], ['cmdty', 'commodity']);
@@ -1025,12 +1025,11 @@
         const tReqVal = idxTempReq >= 0 ? formatTempValue(row[idxTempReq]) : '';
         newRow.tempReq = tReqVal;
         newRow.tempActual = tReqVal;
+        newRow.vent = idxVent >= 0 ? cleanStr(row[idxVent]) : '';
         newRow.commodity = idxCmdty >= 0 ? cleanStr(row[idxCmdty]) : '';
         newRow.pol = idxPol >= 0 ? cleanStr(row[idxPol]) : '';
         newRow.pod = idxPod >= 0 ? cleanStr(row[idxPod]) : '';
-        const rawLoaded = idxLoaded >= 0 ? formatExcelDateTime(row[idxLoaded]) : '';
-        const rawLastMove = idxLastMove >= 0 ? formatExcelDateTime(row[idxLastMove]) : '';
-        newRow.loadTime = rawLoaded || rawLastMove;
+        newRow.loadTime = idxLoaded >= 0 ? formatExcelDateTime(row[idxLoaded]) : '';
         newRow.returnTemp = idxReturn >= 0 ? formatTempValue(row[idxReturn]) : '';
         newRow.supplyTemp = idxSupply >= 0 ? formatTempValue(row[idxSupply]) : '';
         applyRemarksRuleToRow(newRow);
@@ -1144,13 +1143,13 @@
       const idxUnit = findCol(['unit', 'unit nbr', 'contenedor']);
       const idxLine = findCol(['line op', 'line']);
       const idxTemp = findCol(['temp.', 'temp', 'temp required']);
-      const idxVent = findCol(['vent.', 'vent']);
+      const idxVent = findCol(['vent.', 'vent', 'ventilation', 'air vent', 'venting']);
       const idxShipper = findCol(['shipper', 'export', 'exporter']);
       const idxBooking = findCol(['booking']);
       const idxCommodity = findCol(['commodity', 'cmdty']);
-      const idxPol = findCol(['pol']);
+      const idxPol = findCol(['pol', 'port of load', 'port of loading']);
       const idxPod = findCol(['pod']);
-      const idxLoadTime = findCol(['load time', 'loaded', 'last move']);
+      const idxLoadTime = findCol(['load time', 'loaded']);
       const idxReturn = findCol(['return']);
       const idxSupply = findCol(['supply']);
       const idxRemarks = findCol(['remarks', 'remark']);
@@ -1328,8 +1327,6 @@
       const idxLine = findCol(['line op', 'line'], ['line op', 'line']);
       const idxObVisit = findCol(['o/b actual visit', 'ob actual visit', 'vessel', 'voyage'], ['o/b actual visit', 'vessel']);
       const idxLoaded = findCol(['loaded', 'load time'], ['loaded']);
-      const idxLastMove = findCol(['last move', 'lastmove', 'last move time'], ['last move']);
-      const idxLastMove = findCol(['last move', 'lastmove', 'last move time'], ['last move']);
       const idxTempReq = findCol(['temp required (c)', 'temp required', 'temp.'], ['temp required']);
       const idxReturn = findCol(['last temp read (c)', 'last temp read', 'return'], ['last temp read']);
       const idxSupply = findCol(['last supply temp (c)', 'last supply temp', 'supply'], ['last supply temp']);
@@ -1350,8 +1347,9 @@
           lineOp: idxLine >= 0 ? cleanStr(row[idxLine]).toUpperCase() : '',
           vessel: parsedVV.vessel,
           voyage: parsedVV.voyage,
-          loaded: (idxLoaded >= 0 ? formatExcelDateTime(row[idxLoaded]) : '') || (idxLastMove >= 0 ? formatExcelDateTime(row[idxLastMove]) : ''),
+          loaded: idxLoaded >= 0 ? formatExcelDateTime(row[idxLoaded]) : '',
           tempReq: idxTempReq >= 0 ? formatTempValue(row[idxTempReq]) : '',
+          vent: idxVent >= 0 ? cleanStr(row[idxVent]) : '',
           returnTemp: idxReturn >= 0 ? formatTempValue(row[idxReturn]) : '',
           supplyTemp: idxSupply >= 0 ? formatTempValue(row[idxSupply]) : '',
           commodity: idxCmdty >= 0 ? cleanStr(row[idxCmdty]) : '',
@@ -1410,6 +1408,11 @@
           }
           if (isEmptyCell(row.pod) && !isEmptyCell(gen.pod)) {
             row.pod = gen.pod;
+            rowChanged = true;
+            filledCells++;
+          }
+          if (isEmptyCell(row.vent) && !isEmptyCell(gen.vent)) {
+            row.vent = gen.vent;
             rowChanged = true;
             filledCells++;
           }
